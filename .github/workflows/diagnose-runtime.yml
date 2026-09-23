@@ -62,3 +62,10 @@ jobs:
           ls -lh /tmp/aervalon-chrome.png || true
           kill $SERVER_PID || true
           exit 0
+
+      - name: Upload Chromium screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: aervalon-browser-smoke
+          path: /tmp/aervalon-chrome.png
+          if-no-files-found: error

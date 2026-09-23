@@ -1,0 +1,39 @@
+name: Diagnose Aervalon Runtime
+
+on:
+  push:
+    branches: [diagnostic-runtime]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout diagnostic branch
+        uses: actions/checkout@v4
+
+      - name: Install Godot and export templates
+        uses: firebelley/godot-export@v6.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz
+          relative_project_path: ./
+          archive_output: false
+
+      - name: Run project headless
+        shell: bash
+        run: |
+          GODOT="$HOME/.local/share/godot/godot_executable/Godot_v4.5.1-stable_linux.x86_64"
+          echo "=== Godot version ==="
+          "$GODOT" --version
+          echo "=== Headless runtime test ==="
+          set +e
+          timeout 20s "$GODOT" --headless --path . --verbose --quit-after 10 2>&1 | tee runtime.log
+          RC=${PIPESTATUS[0]}
+          echo "=== Runtime exit code: $RC ==="
+          echo "=== Errors/warnings ==="
+          grep -E "ERROR|SCRIPT ERROR|Parse Error|Invalid|Failed loading|WARNING" runtime.log || true
+          exit 0

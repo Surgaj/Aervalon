@@ -17,6 +17,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      build_dir: ${{ steps.version.outputs.build_dir }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,12 +31,37 @@ jobs:
           relative_project_path: ./
           archive_output: false
 
-      - name: Prepare Pages artifact
+      - name: Create immutable build path
+        id: version
+        shell: bash
         run: |
-          mkdir -p public
-          cp -r "$HOME/.local/share/godot/builds/Web/." public/
+          SHORT_SHA="${GITHUB_SHA::8}"
+          BUILD_DIR="build-${GITHUB_RUN_NUMBER}-${SHORT_SHA}"
+          echo "build_dir=$BUILD_DIR" >> "$GITHUB_OUTPUT"
+          mkdir -p "public/$BUILD_DIR"
+          cp -r "$HOME/.local/share/godot/builds/Web/." "public/$BUILD_DIR/"
+          touch "public/$BUILD_DIR/.nojekyll"
+          test -f "public/$BUILD_DIR/index.html"
+          test -f "public/$BUILD_DIR/index.pck"
+          test -f "public/$BUILD_DIR/index.wasm"
+          PCK_SIZE=$(stat -c%s "public/$BUILD_DIR/index.pck")
+          echo "Published immutable build: $BUILD_DIR (PCK $PCK_SIZE bytes)"
+
+          cat > public/index.html <<EOF
+          <!doctype html>
+          <html><head>
+          <meta charset="utf-8">
+          <meta http-equiv="cache-control" content="no-store, no-cache, must-revalidate">
+          <meta http-equiv="pragma" content="no-cache">
+          <meta http-equiv="expires" content="0">
+          <meta http-equiv="refresh" content="0; url=./$BUILD_DIR/">
+          <title>Aervalon</title>
+          </head><body>
+          <p>Loading Aervalon...</p>
+          <script>location.replace("./$BUILD_DIR/");</script>
+          </body></html>
+          EOF
           touch public/.nojekyll
-          test -f public/index.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -51,6 +78,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy immutable build to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

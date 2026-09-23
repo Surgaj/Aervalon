@@ -1,14 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource path="res://scenes/actors/player.tscn" type="PackedScene" id="1"]
 [ext_resource path="res://scenes/actors/wolf.tscn" type="PackedScene" id="2"]
 [ext_resource path="res://scripts/mobile_controls.gd" type="Script" id="3"]
-[ext_resource path="res://scripts/world_visuals.gd" type="Script" id="4"]
 
 [node name="Eryndor" type="Node2D"]
-
-[node name="WorldVisuals" type="Node2D" parent="."]
-script = ExtResource("4")
 
 [node name="Ground" type="Polygon2D" parent="."]
 polygon = PackedVector2Array(0,0,1280,0,1280,720,0,720)

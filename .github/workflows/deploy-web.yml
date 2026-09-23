@@ -26,8 +26,9 @@ jobs:
       - name: Prepare Pages
         run: |
           mkdir -p public
-          cp -r build/web/* public/
+          cp -r "$HOME/.local/share/godot/builds/Web/." public/
           touch public/.nojekyll
+          test -f public/index.html
 
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4

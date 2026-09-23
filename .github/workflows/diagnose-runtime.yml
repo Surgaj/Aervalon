@@ -27,7 +27,6 @@ jobs:
         shell: bash
         run: |
           GODOT="$HOME/.local/share/godot/godot_executable/Godot_v4.5.1-stable_linux.x86_64"
-          "$GODOT" --version
           set +e
           timeout 20s "$GODOT" --headless --path . --verbose --quit-after 10 2>&1 | tee runtime.log
           SRC_RC=${PIPESTATUS[0]}
@@ -40,10 +39,26 @@ jobs:
         run: |
           GODOT="$HOME/.local/share/godot/godot_executable/Godot_v4.5.1-stable_linux.x86_64"
           PACK="$HOME/.local/share/godot/builds/Web/index.pck"
-          ls -lh "$PACK"
           set +e
           timeout 20s "$GODOT" --headless --main-pack "$PACK" --verbose --quit-after 10 2>&1 | tee pck-runtime.log
           PCK_RC=${PIPESTATUS[0]}
           echo "PCK_RUNTIME_EXIT=$PCK_RC"
           grep -E "ERROR|SCRIPT ERROR|Parse Error|Invalid|Failed loading|WARNING" pck-runtime.log || true
+          exit 0
+
+      - name: Browser smoke test with Chromium
+        shell: bash
+        run: |
+          WEB="$HOME/.local/share/godot/builds/Web"
+          python3 -m http.server 8765 --directory "$WEB" > /tmp/aervalon-http.log 2>&1 &
+          SERVER_PID=$!
+          sleep 2
+          set +e
+          google-chrome --headless --no-sandbox --disable-dev-shm-usage --enable-logging=stderr --v=1 --use-angle=swiftshader --enable-unsafe-swiftshader --virtual-time-budget=10000 --screenshot=/tmp/aervalon-chrome.png http://127.0.0.1:8765/ > /tmp/chrome.out 2> /tmp/chrome.err
+          CHROME_RC=$?
+          echo "CHROME_EXIT=$CHROME_RC"
+          grep -E "CONSOLE|ERROR|error|WebGL|wasm|Godot|exception|failed" /tmp/chrome.err | tail -200 || true
+          file /tmp/aervalon-chrome.png || true
+          ls -lh /tmp/aervalon-chrome.png || true
+          kill $SERVER_PID || true
           exit 0

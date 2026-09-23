@@ -33,7 +33,7 @@ jobs:
           set +e
           timeout 20s "$GODOT" --headless --path . --verbose --quit-after 10 2>&1 | tee runtime.log
           RC=${PIPESTATUS[0]}
-          echo "=== Runtime exit code: $RC ==="
+          echo "=== Runtime exit code: $RC ==="\n          echo "=== EXPORTED PCK RUNTIME TEST ==="\n          PACK="$HOME/.local/share/godot/builds/Web/index.pck"\n          ls -lh "$PACK"\n          timeout 20s "$GODOT" --headless --main-pack "$PACK" --verbose --quit-after 10 2>&1 | tee exported-pck-runtime.log\n          PRC=${PIPESTATUS[0]}\n          echo "=== Exported PCK exit code: $PRC ==="\n          echo "=== Exported PCK errors/warnings ==="\n          grep -E "ERROR|SCRIPT ERROR|Parse Error|Invalid|Failed loading|WARNING" exported-pck-runtime.log || true
           echo "=== Errors/warnings ==="
           grep -E "ERROR|SCRIPT ERROR|Parse Error|Invalid|Failed loading|WARNING" runtime.log || true
           exit 0

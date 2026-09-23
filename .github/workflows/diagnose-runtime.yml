@@ -23,17 +23,27 @@ jobs:
           relative_project_path: ./
           archive_output: false
 
-      - name: Run project headless
+      - name: Run source project headless
         shell: bash
         run: |
           GODOT="$HOME/.local/share/godot/godot_executable/Godot_v4.5.1-stable_linux.x86_64"
-          echo "=== Godot version ==="
           "$GODOT" --version
-          echo "=== Headless runtime test ==="
           set +e
           timeout 20s "$GODOT" --headless --path . --verbose --quit-after 10 2>&1 | tee runtime.log
-          RC=${PIPESTATUS[0]}
-          echo "=== Runtime exit code: $RC ==="\n          echo "=== EXPORTED PCK RUNTIME TEST ==="\n          PACK="$HOME/.local/share/godot/builds/Web/index.pck"\n          ls -lh "$PACK"\n          timeout 20s "$GODOT" --headless --main-pack "$PACK" --verbose --quit-after 10 2>&1 | tee exported-pck-runtime.log\n          PRC=${PIPESTATUS[0]}\n          echo "=== Exported PCK exit code: $PRC ==="\n          echo "=== Exported PCK errors/warnings ==="\n          grep -E "ERROR|SCRIPT ERROR|Parse Error|Invalid|Failed loading|WARNING" exported-pck-runtime.log || true
-          echo "=== Errors/warnings ==="
+          SRC_RC=${PIPESTATUS[0]}
+          echo "SOURCE_RUNTIME_EXIT=$SRC_RC"
           grep -E "ERROR|SCRIPT ERROR|Parse Error|Invalid|Failed loading|WARNING" runtime.log || true
+          exit 0
+
+      - name: Run exported Web PCK headless
+        shell: bash
+        run: |
+          GODOT="$HOME/.local/share/godot/godot_executable/Godot_v4.5.1-stable_linux.x86_64"
+          PACK="$HOME/.local/share/godot/builds/Web/index.pck"
+          ls -lh "$PACK"
+          set +e
+          timeout 20s "$GODOT" --headless --main-pack "$PACK" --verbose --quit-after 10 2>&1 | tee pck-runtime.log
+          PCK_RC=${PIPESTATUS[0]}
+          echo "PCK_RUNTIME_EXIT=$PCK_RC"
+          grep -E "ERROR|SCRIPT ERROR|Parse Error|Invalid|Failed loading|WARNING" pck-runtime.log || true
           exit 0

@@ -1,0 +1,52 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource path="res://scenes/actors/player.tscn" type="PackedScene" id="1"]
+[ext_resource path="res://scenes/actors/wolf.tscn" type="PackedScene" id="2"]
+[sub_resource type="RectangleShape2D" id="WallH"]
+size = Vector2(1280,32)
+
+[node name="Eryndor" type="Node2D"]
+
+[node name="Ground" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0,0,1280,0,1280,720,0,720)
+color = Color(0.19,0.38,0.19,1)
+
+[node name="River" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(0,520,260,500,480,545,700,510,900,555,1280,525,1280,640,900,650,680,610,450,645,220,590,0,610)
+color = Color(0.15,0.45,0.7,1)
+
+[node name="VillageSquare" type="Polygon2D" parent="."]
+polygon = PackedVector2Array(420,250,850,250,900,470,380,470)
+color = Color(0.55,0.46,0.29,1)
+
+[node name="Title" type="Label" parent="."]
+position = Vector2(32,28)
+text = "VALE DE ERYNDOR  •  VERTICAL SLICE 0.1"
+theme_override_font_sizes/font_size = 22
+
+[node name="Hint" type="Label" parent="."]
+position = Vector2(32,58)
+text = "WASD / setas: mover   •   Espaço: atacar   •   Explore a Floresta Sussurrante"
+theme_override_font_sizes/font_size = 16
+
+[node name="ForestLabel" type="Label" parent="."]
+position = Vector2(930,140)
+text = "FLORESTA\nSUSSURRANTE"
+theme_override_font_sizes/font_size = 18
+
+[node name="VillageLabel" type="Label" parent="."]
+position = Vector2(555,300)
+text = "VILA DE ERYNDOR"
+theme_override_font_sizes/font_size = 20
+
+[node name="Player" parent="." instance=ExtResource("1")]
+position = Vector2(640,390)
+
+[node name="Wolf1" parent="." instance=ExtResource("2")]
+position = Vector2(1010,250)
+
+[node name="Wolf2" parent="." instance=ExtResource("2")]
+position = Vector2(1100,330)
+
+[node name="Wolf3" parent="." instance=ExtResource("2")]
+position = Vector2(980,390)

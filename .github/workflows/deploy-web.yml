@@ -63,6 +63,34 @@ jobs:
           EOF
           touch public/.nojekyll
 
+      # Build the current visual-rebuild-v2 branch into a separate preview path.
+      # The root URL continues to point at the immutable main build above.
+      - name: Checkout V2 preview
+        uses: actions/checkout@v4
+        with:
+          ref: visual-rebuild-v2
+          path: preview-src
+
+      - name: Export V2 preview
+        uses: firebelley/godot-export@v6.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz
+          relative_project_path: ./preview-src/
+          archive_output: false
+
+      - name: Publish V2 preview path
+        shell: bash
+        run: |
+          rm -rf public/preview-v2
+          mkdir -p public/preview-v2
+          cp -r "$HOME/.local/share/godot/builds/Web/." public/preview-v2/
+          touch public/preview-v2/.nojekyll
+          test -f public/preview-v2/index.html
+          test -f public/preview-v2/index.pck
+          test -f public/preview-v2/index.wasm
+          echo "V2 preview staged at /preview-v2/"
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

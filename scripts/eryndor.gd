@@ -11,6 +11,8 @@ var quest_complete := false
 var chest_open := false
 var coins := 0
 var message_time := 0.0
+var qa_enabled := false
+var qa_clock := 0.0
 var nearest_npc
 func _ready():
 	if not InputMap.has_action("interact"):
@@ -40,6 +42,8 @@ func _ready():
 	hud = CanvasLayer.new()
 	hud.set_script(load("res://scripts/mobile_controls.gd"))
 	add_child(hud)
+	if OS.has_feature("web"):
+		qa_enabled = JavaScriptBridge.eval("new URLSearchParams(location.search).has('qa')") == true
 	show_message("Vale de Eryndor","Fale com Mara junto à ponte. WASD / setas para andar • E para falar • Espaço para atacar.")
 func spawn_npc(title: String, appearance: String, point: Vector2, radius: float):
 	var npc = NPC.instantiate()
@@ -63,6 +67,12 @@ func _process(delta):
 		quest_started = true
 		show_message("Ameaça na Mata","Os lobos bloquearam a estrada. Derrote três e volte a Mara.")
 	if is_instance_valid(hud): hud.refresh()
+	if qa_enabled:
+		qa_clock += delta
+		if qa_clock>0.1:
+			qa_clock = 0
+			var state = {"position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible}
+			JavaScriptBridge.eval("document.querySelector('canvas').dataset.aervalon="+JSON.stringify(JSON.stringify(state)))
 func interact_nearby():
 	if player.death_time>0: return
 	if nearest_npc:

@@ -51,6 +51,7 @@ func _ready():
 	for title in ["Todos","Consumíveis","Materiais","Equipamentos","Itens de missão"]:
 		var button = make_button(title)
 		button.add_theme_font_size_override("font_size",17)
+		button.custom_minimum_size.y = 40
 		button.pressed.connect(func(): category=title; selected=""; refresh())
 		categories.add_child(button)
 	var body = HBoxContainer.new()
@@ -146,11 +147,11 @@ func refresh_detail():
 		equip_action.visible=false
 		return
 	var item = r.ITEMS[selected]
-	detail.text = "%s\n%s\n\n%s\n\nVenda: %d moedas%s" % [item.name,item.type,item.description,item.value,"\nEquipado" if selected in r.equipment.values() else ""]
+	detail.text = "%s\n%s\n%s\nVenda: %d moedas%s" % [item.name,item.type,item.description,item.value,"\nEquipado" if selected in r.equipment.values() else ""]
 	action.disabled=false
 	action.text="Comprar • %d" % item.price if mode=="Comprar" else ("Vender 1 • %d" % item.value if mode=="Vender" else ("Equipar" if item.has("slot") else "Usar"))
 	if mode=="Mochila": action.disabled=not item.has("slot") and not item.has("heal")
-	equip_action.visible=mode!="Mochila" and r.inventory.has(selected) and (item.has("slot") or item.has("heal"))
+	equip_action.visible=false
 func transact():
 	if selected=="": return
 	if mode=="Comprar": feedback.text=world.rpg.buy(selected,shop)

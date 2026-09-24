@@ -2,7 +2,7 @@ extends RefCounted
 # IDs are stable save keys. Definitions can grow without changing the save schema.
 const ITEMS = {
 	"rusty_sword": {"name":"Espada Enferrujada", "type":"Equipamentos", "slot":"weapon", "attack":5, "price":8, "value":3, "icon":"sword", "description":"Uma lâmina gasta. Ataque +5."},
-	"iron_sword": {"name":"Espada de Ferro", "type":"Equipamentos", "slot":"weapon", "attack":13, "price":38, "value":15, "icon":"sword", "description":"Forjada por Borin. Ataque +13."},
+	"iron_sword": {"name":"Espada de Ferro", "type":"Equipamentos", "slot":"weapon", "attack":18, "price":38, "value":15, "icon":"sword", "description":"Forjada por Borin. Ataque +18."},
 	"leather_armor": {"name":"Armadura Simples", "type":"Equipamentos", "slot":"armor", "defense":3, "price":24, "value":9, "icon":"armor", "description":"Couro reforçado. Defesa +3."},
 	"potion": {"name":"Poção de Vida", "type":"Consumíveis", "heal":45, "price":8, "value":3, "icon":"potion", "description":"Recupera 45 pontos de vida."},
 	"bread": {"name":"Pão da Vila", "type":"Consumíveis", "heal":20, "price":4, "value":1, "icon":"bread", "description":"Recupera 20 pontos de vida."},
@@ -61,6 +61,8 @@ func snapshot() -> Dictionary:
 func restore(data) -> bool:
 	if not data is Dictionary or data.get("version",0)!=1: return false
 	if not data.get("inventory") is Dictionary or not data.get("equipment") is Dictionary: return false
+	for field in ["level","xp","coins","kills"]:
+		if data.has(field) and not (data[field] is int or data[field] is float): return false
 	level = clampi(int(data.get("level",1)),1,100)
 	xp = clampi(int(data.get("xp",0)),0,xp_needed()-1)
 	coins = clampi(int(data.get("coins",12)),0,999999)

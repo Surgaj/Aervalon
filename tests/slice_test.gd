@@ -70,7 +70,7 @@ func run():
 	check(world.rpg.buy("iron_sword","borin")=="Item comprado" and world.coins==32,"Purchase transfers coins into an inventory item")
 	var old_attack = world.rpg.attack()
 	world.use_item("iron_sword")
-	check(world.rpg.attack()==old_attack+8,"Equipped sword increases real attack")
+	check(world.rpg.attack()==old_attack+13,"Equipped sword increases real attack")
 	check(world.rpg.sell("iron_sword")!="Item vendido","Cannot sell the equipped last copy")
 	world.rpg.buy("leather_armor","borin")
 	world.use_item("leather_armor")

@@ -35,13 +35,17 @@ const assert = require('node:assert/strict');
     await page.screenshot({ path: 'qa/eryndor-attack.png' });
     // Walk to the actual merchant, interact, then buy through rendered buttons.
     async function walkAxis(axis,target,keyPositive,keyNegative) {
-      const state=await readState();
-      const offset=target-state.position[axis];
-      const key=offset>0?keyPositive:keyNegative;
-      await page.keyboard.down(key);
-      await page.waitForTimeout(Math.abs(offset)/170*1000);
-      await page.keyboard.up(key);
-      await page.waitForTimeout(150);
+      for(let attempt=0;attempt<30;attempt++) {
+        const state=await readState();
+        const offset=target-state.position[axis];
+        if(Math.abs(offset)<12) return;
+        const key=offset>0?keyPositive:keyNegative;
+        await page.keyboard.down(key);
+        await page.waitForTimeout(Math.min(450,Math.max(120,Math.abs(offset)/170*1000)));
+        await page.keyboard.up(key);
+        await page.waitForTimeout(180);
+      }
+      throw new Error('Walking failed to reach '+target+': '+JSON.stringify(await readState()));
     }
     await walkAxis(0,500,'d','a');
     await walkAxis(1,650,'s','w');
@@ -61,6 +65,11 @@ const assert = require('node:assert/strict');
     assert.equal((await readState()).coins,4,'Shop UI deducts potion price');
     assert.equal((await readState()).inventory.potion,3,'Shop UI adds bought potion');
     await page.screenshot({path:'qa/shop-merchant.png'});
+    await page.setViewportSize({width:844,height:390});
+    await page.waitForTimeout(400);
+    await page.screenshot({path:'qa/shop-mobile.png'});
+    await page.setViewportSize({width:1280,height:720});
+    await page.waitForTimeout(400);
     await page.keyboard.press('Escape');
     await walkAxis(1,470,'s','w');
     await walkAxis(0,670,'d','a');

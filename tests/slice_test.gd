@@ -13,6 +13,7 @@ func run():
 	await physics_frame
 	var world = current_scene
 	var player = world.player
+	var starting_coins = world.coins
 	check(world.get_node("YSortWorld").y_sort_enabled,"Actors and props share Y-sort")
 	check(get_nodes_in_group("enemy").size()==3,"Three wolves loaded with raster animation")
 	var mara = get_nodes_in_group("npc")[0]
@@ -47,13 +48,78 @@ func run():
 		while foe.health>0: player._strike()
 	check(world.quest_kills==3 and not world.quest_complete,"Three kills require return to Mara")
 	world.npc_dialogue(mara)
-	check(world.quest_complete and world.coins==25,"Mara completes quest and grants reward")
+	check(world.quest_complete and world.coins==starting_coins+25,"Mara completes quest and grants reward")
 	world.npc_dialogue(mara)
-	check(world.coins==25,"Reward cannot be claimed twice")
+	check(world.coins==starting_coins+25,"Reward cannot be claimed twice")
 	player.hit_time = 0
-	player.take_damage(100)
+	player.take_damage(999)
 	check(player.death_time>0,"Death animation state starts")
 	for i in 105: await physics_frame
-	check(player.health==100 and player.position.distance_to(player.spawn)<2,"Death returns player safely to village")
+	check(player.health==player.max_health and player.position.distance_to(player.spawn)<2,"Death returns player safely to village")
+	# Inventory, trade and equipment exercise the same handlers as the touch UI.
+	check(world.rpg.level==2 and world.rpg.xp==45,"Combat and mission XP level up once")
+	check(get_nodes_in_group("loot").size()==3,"Wolves leave visible loot nodes")
+	for drop in get_nodes_in_group("loot"): drop.collect()
+	check(world.rpg.inventory.get("wolf_pelt",0)==3,"Ground drops enter inventory")
+	var before_sale = world.coins
+	check(world.rpg.sell("wolf_pelt")=="Item vendido" and world.coins==before_sale+5,"Loot sale pays exactly once")
+	world.coins=0
+	check(world.rpg.buy("iron_sword","borin")=="Moedas insuficientes" and not world.rpg.inventory.has("iron_sword"),"Insufficient funds cannot mint items")
+	check(world.rpg.buy("iron_sword","merchant")=="Item indisponível","Shop rejects foreign stock")
+	world.coins=70
+	check(world.rpg.buy("iron_sword","borin")=="Item comprado" and world.coins==32,"Purchase transfers coins into an inventory item")
+	var old_attack = world.rpg.attack()
+	world.use_item("iron_sword")
+	check(world.rpg.attack()==old_attack+8,"Equipped sword increases real attack")
+	check(world.rpg.sell("iron_sword")!="Item vendido","Cannot sell the equipped last copy")
+	world.rpg.buy("leather_armor","borin")
+	world.use_item("leather_armor")
+	player.hit_time=0
+	var hp=player.health
+	player.take_damage(12)
+	check(player.health==hp-9,"Armor reduces incoming damage")
+	player.health=35
+	check(world.use_item("potion")=="Vida recuperada" and player.health==80,"Potion consumes one item and heals")
+	player.health=player.max_health
+	var potion_count=world.rpg.inventory.get("potion",0)
+	world.use_item("potion")
+	check(world.rpg.inventory.get("potion",0)==potion_count,"Full health does not waste potions")
+	world.hud.open_inventory("borin")
+	player.attack_cooldown=0
+	player.attack()
+	check(world.modal_open and player.attack_time==0,"Trade panel blocks combat")
+	player.set_touch_direction(Vector2.RIGHT)
+	var stopped=player.position
+	for i in 5: await physics_frame
+	check(player.position==stopped,"Trade panel blocks movement")
+	world.hud.inventory_panel.close()
+	world.persist()
+	var copy=load("res://scripts/rpg_state.gd").new()
+	check(copy.restore(world.rpg.snapshot()) and copy.equipment.weapon=="iron_sword" and copy.quest=="complete" and copy.level==2,"Save round trip retains progression and gear")
+	copy.save_path="user://qa-rpg-save.json"
+	check(copy.save_game(),"Native atomic save succeeds")
+	var reloaded=load("res://scripts/rpg_state.gd").new()
+	reloaded.save_path=copy.save_path
+	check(reloaded.load_game() and reloaded.snapshot()==copy.snapshot(),"Actual file reload restores every saved field")
+	DirAccess.remove_absolute(copy.save_path)
+	check(not copy.restore({"version":999}),"Unknown save version is rejected")
+	var before_death=world.rpg.snapshot()
+	player.hit_time=0
+	player.take_damage(999)
+	for i in 105: await physics_frame
+	check(world.rpg.snapshot()==before_death,"Death preserves inventory, level, coins and quest")
+	var respawner=enemies[0]
+	respawner.set_physics_process(true)
+	respawner.dead_time=26
+	for i in 3: await physics_frame
+	check(respawner.health==75 and respawner.position.distance_to(respawner.origin)<5,"Wolf respawns away from the player")
+	world.quest_started=false
+	world.quest_kills=0
+	world.quest_complete=false
+	player.position=Vector2(1150,600)
+	for i in 3: await physics_frame
+	check(not world.quest_started,"Crossing coordinates never starts the quest")
+	world._enemy_died()
+	check(world.quest_kills==0 and not world.quest_started,"Kills before conversation do not start quest")
 	print("SLICE TEST COMPLETE: ",failures," failure(s)")
 	quit(1 if failures else 0)

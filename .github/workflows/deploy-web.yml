@@ -1,4 +1,4 @@
-name: Build and Deploy Aervalon Web
+name: Build, test and publish Eryndor preview
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -39,7 +40,7 @@ jobs:
           set -euo pipefail
           godot --headless --path . --editor --import 2>&1 | tee /tmp/import.log
           if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/import.log; then exit 1; fi
-          godot --headless --path . --script tests/slice_test.gd 2>&1 | tee /tmp/tests.log
+          godot --headless --path . --script tests/slice_test.gd -- --test 2>&1 | tee /tmp/tests.log
           if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/tests.log; then exit 1; fi
           mkdir -p build/web
           godot --headless --path . --export-release Web build/web/index.html 2>&1 | tee /tmp/export.log
@@ -61,37 +62,41 @@ jobs:
           name: aervalon-browser-qa
           path: qa/
 
-      - name: Create immutable build path
+      - name: Preserve published stable build and add immutable preview
         id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          SHORT_SHA="${GITHUB_SHA::8}"
-          BUILD_DIR="build-${GITHUB_RUN_NUMBER}-${SHORT_SHA}"
+          set -euo pipefail
+          # Only restore successfully deployed main releases or this preview workflow.
+          RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?status=success&per_page=50" --jq '.workflow_runs | map(select(.head_branch == "main" or .name == "Build, test and publish Eryndor preview")) | .[0].id')
+          test -n "$RUN" && test "$RUN" != null
+          ARTIFACT=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/artifacts" --jq '.artifacts[] | select(.name == "github-pages" and .expired == false) | .id')
+          test -n "$ARTIFACT"
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT/zip" > /tmp/published.zip
+          mkdir -p public /tmp/published
+          unzip -q /tmp/published.zip -d /tmp/published
+          tar -xf /tmp/published/artifact.tar -C public
+          test -f public/index.html
+          sha256sum public/index.html > /tmp/stable-root.sha
+          BUILD_DIR="build-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::8}"
           echo "build_dir=$BUILD_DIR" >> "$GITHUB_OUTPUT"
-          mkdir -p "public/$BUILD_DIR"
-          cp -r "build/web/." "public/$BUILD_DIR/"
-          touch "public/$BUILD_DIR/.nojekyll"
-          test -f "public/$BUILD_DIR/index.html"
-          test -f "public/$BUILD_DIR/index.pck"
-          test -f "public/$BUILD_DIR/index.wasm"
-          PCK_SIZE=$(stat -c%s "public/$BUILD_DIR/index.pck")
-          echo "Published immutable build: $BUILD_DIR (PCK $PCK_SIZE bytes)"
-
-          cat > public/index.html <<EOF
-          <!doctype html>
-          <html><head>
-          <meta charset="utf-8">
-          <meta http-equiv="cache-control" content="no-store, no-cache, must-revalidate">
-          <meta http-equiv="pragma" content="no-cache">
-          <meta http-equiv="expires" content="0">
-          <meta http-equiv="refresh" content="0; url=./$BUILD_DIR/">
-          <title>Aervalon</title>
-          </head><body>
-          <p>Loading Aervalon...</p>
-          <script>location.replace("./$BUILD_DIR/");</script>
+          mkdir -p "public/preview-v2/$BUILD_DIR"
+          cp -r build/web/. "public/preview-v2/$BUILD_DIR/"
+          cat > public/preview-v2/index.html <<EOF
+          <!doctype html><html><head><meta charset="utf-8">
+          <meta http-equiv="cache-control" content="no-store">
+          <meta http-equiv="refresh" content="0;url=./$BUILD_DIR/">
+          <title>Aervalon — Eryndor</title></head><body>
+          <a href="./$BUILD_DIR/">Jogar Aervalon</a>
+          <script>location.replace("./$BUILD_DIR/"+location.search);</script>
           </body></html>
           EOF
           touch public/.nojekyll
+          test -f "public/preview-v2/$BUILD_DIR/index.pck"
+          test -f "public/preview-v2/$BUILD_DIR/index.wasm"
+          sha256sum -c /tmp/stable-root.sha
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -102,7 +107,6 @@ jobs:
           path: public
 
   deploy:
-    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

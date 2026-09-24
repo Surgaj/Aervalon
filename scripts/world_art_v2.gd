@@ -4,8 +4,10 @@ const ROOT = "res://assets/aervalon/v2/"
 var trees: Array[Sprite2D] = []
 var phase := 0.0
 var yworld: Node2D
+var variation := RandomNumberGenerator.new()
 var terrain: Node2D
 func _ready():
+	variation.seed = 417
 	yworld = get_parent().get_node("YSortWorld")
 	terrain = get_parent().get_node("Terrain")
 	ground("grass",Rect2(0,0,1900,1100),false,Color(0.58,0.68,0.51))
@@ -13,7 +15,7 @@ func _ready():
 	ground("dirt",Rect2(1025,505,780,220),true,Color(0.87,0.83,0.72))
 	var river = ground("water",Rect2(915,0,145,1100),false,Color(0.65,0.9,0.92))
 	var water_shader = Shader.new()
-	water_shader.code = "shader_type canvas_item; varying vec4 tint; void vertex(){tint=COLOR;} void fragment(){ vec2 uv=UV+vec2(sin(UV.y*26.0+TIME)*0.009,TIME*0.018); COLOR=texture(TEXTURE,uv)*tint; }"
+	water_shader.code = "shader_type canvas_item; varying vec4 tint; varying vec2 local; void vertex(){tint=COLOR;local=VERTEX;} void fragment(){ vec2 uv=UV+vec2(sin(UV.y*26.0+TIME)*0.009,TIME*0.018); float edge=abs(local.x)+12.0*sin(local.y*0.013)+7.0*sin(local.y*0.039); vec4 c=texture(TEXTURE,uv)*tint; c.a*=1.0-smoothstep(249.0,290.0,edge); COLOR=c; }"
 	var material = ShaderMaterial.new()
 	material.shader = water_shader
 	river.material = material
@@ -22,7 +24,9 @@ func _ready():
 	wall_polygon([Vector2(915,589),Vector2(1060,659),Vector2(1060,1100),Vector2(915,1100)])
 	prop("bridge",Vector2(990,684),330,Vector2.ZERO,false)
 	prop("house",Vector2(360,405),310,Vector2(210,85))
-	prop("forge",Vector2(700,420),310,Vector2(200,65))
+	var forge = prop("forge",Vector2(700,420),310,Vector2(200,65))
+	forge.get_parent().position.y -= 105
+	for child in forge.get_parent().get_children(): child.position.y += 105
 	prop("market",Vector2(360,720),220,Vector2(135,55))
 	prop("well",Vector2(695,805),115,Vector2(65,36))
 	prop("supplies",Vector2(490,416),76,Vector2(48,28))
@@ -33,13 +37,17 @@ func _ready():
 	prop("flowers",Vector2(527,825),92,Vector2.ZERO)
 	# Trees frame routes and offer deliberate front/back occlusion test points.
 	for point in [Vector2(150,270),Vector2(155,600),Vector2(150,940),Vector2(380,980),Vector2(700,1010),Vector2(820,265),Vector2(1110,275),Vector2(1300,330),Vector2(1510,300),Vector2(1730,380),Vector2(1820,600),Vector2(1170,890),Vector2(1390,950),Vector2(1630,870),Vector2(590,205),Vector2(350,160),Vector2(1700,1040),Vector2(1850,950),Vector2(1490,145),Vector2(1220,130)]:
-		var tree = prop("tree",point,220,Vector2(27,24))
+		var width = variation.randf_range(188,236)
+		var tree = prop("tree",point+Vector2(variation.randf_range(-16,16),variation.randf_range(-10,10)),width,Vector2(27,24))
+		tree.flip_h = variation.randf()>0.5
+		tree.modulate = Color(variation.randf_range(0.90,1.0),variation.randf_range(0.92,1.0),variation.randf_range(0.88,1.0))
 		trees.append(tree)
 	for point in [Vector2(1130,720),Vector2(1350,450),Vector2(1625,760),Vector2(1790,500),Vector2(850,825),Vector2(858,380),Vector2(1090,430),Vector2(1080,785),Vector2(865,990),Vector2(1700,590)]:
-		prop("flowers",point,85,Vector2(33,18))
-	for y in [100,250,400,820,990]:
-		prop("flowers",Vector2(905,y),70,Vector2.ZERO)
-		prop("flowers",Vector2(1070,y+40),70,Vector2.ZERO)
+		var flowers = prop("flowers",point,variation.randf_range(48,83),Vector2(26,14))
+		flowers.flip_h = variation.randf()>0.5
+	for y in [60,155,270,375,455,765,850,950,1070]:
+		prop("flowers",Vector2(913-variation.randf_range(0,8),y),variation.randf_range(38,62),Vector2.ZERO)
+		prop("flowers",Vector2(1063+variation.randf_range(0,8),y+30),variation.randf_range(38,62),Vector2.ZERO)
 	wall(Rect2(-30,-30,1960,30))
 	wall(Rect2(-30,1100,1960,30))
 	wall(Rect2(-30,0,30,1100))
@@ -62,7 +70,7 @@ func ground(asset: String, rect: Rect2, feather: bool, tint: Color) -> Sprite2D:
 	terrain.add_child(sprite)
 	if feather:
 		var shader = Shader.new()
-		shader.code = "shader_type canvas_item; varying vec2 local; varying vec4 tint; void vertex(){local=VERTEX;tint=COLOR;} void fragment(){vec4 c=texture(TEXTURE,UV)*tint; vec2 a=abs(local)/vec2(%f,%f); float e=max(a.x,a.y); c.a*=1.0-smoothstep(0.75,1.0,e); COLOR=c;}" % [rect.size.x*2,rect.size.y*2]
+		shader.code = "shader_type canvas_item; varying vec2 local; varying vec4 tint; void vertex(){local=VERTEX;tint=COLOR;} void fragment(){vec4 c=texture(TEXTURE,UV)*tint; vec2 a=abs(local)/vec2(%f,%f); float noise=0.028*sin(local.x*0.043)*sin(local.y*0.033)+0.025*sin(local.y*0.061); float e=pow(pow(a.x,6.0)+pow(a.y,6.0),1.0/6.0)+noise; c.a*=1.0-smoothstep(0.76,0.98,e); COLOR=c;}" % [rect.size.x*2,rect.size.y*2]
 		var mat = ShaderMaterial.new()
 		mat.shader = shader
 		sprite.material = mat

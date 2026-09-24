@@ -45,6 +45,22 @@ jobs:
           godot --headless --path . --export-release Web build/web/index.html 2>&1 | tee /tmp/export.log
           if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/export.log; then exit 1; fi
 
+      - name: Install browser test dependencies
+        run: |
+          npm install --prefix tests/browser
+          cd tests/browser
+          npx playwright install --with-deps chromium
+
+      - name: Verify WebGL build and mobile controls
+        run: node tests/browser/smoke.cjs
+
+      - name: Save browser verification captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aervalon-browser-qa
+          path: qa/
+
       - name: Create immutable build path
         id: version
         shell: bash
@@ -86,6 +102,7 @@ jobs:
           path: public
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

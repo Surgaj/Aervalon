@@ -19,11 +19,24 @@ func _ready():
 	target = origin
 	$Visual.setup("wolf")
 func _physics_process(delta):
+	if get_tree().current_scene.modal_open: return
 	if health<=0:
 		dead_time += delta
 		$Visual.set_state("death",facing)
 		modulate.a = clampf(1.5-dead_time*0.22,0,1)
-		if dead_time>7: queue_free()
+		if dead_time>25 and player.global_position.distance_to(origin)>160:
+			health = 75
+			global_position = origin
+			modulate.a = 1
+			collision_layer = 4
+			dead_time = 0
+			hit_stun = 0
+			velocity = Vector2.ZERO
+			attack_cd = 1
+			patrol_time = 2
+			windup = 0
+			state = "patrol"
+			target = origin
 		return
 	if not is_instance_valid(player): return
 	attack_cd = maxf(0,attack_cd-delta)
@@ -36,7 +49,9 @@ func _physics_process(delta):
 	if windup>0:
 		windup -= delta
 		$Visual.set_state("attack",facing)
-		if windup<=0 and distance<56 and player.death_time<=0: player.take_damage(12)
+		if windup<=0 and distance<56 and player.death_time<=0:
+			var ray = PhysicsRayQueryParameters2D.create(global_position,player.global_position,1)
+			if get_world_2d().direct_space_state.intersect_ray(ray).is_empty(): player.take_damage(12)
 		return
 	if player.death_time>0 or global_position.distance_to(origin)>310:
 		state = "return"

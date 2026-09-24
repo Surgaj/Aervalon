@@ -13,6 +13,11 @@ var portrait_warning: Panel
 var coins: Label
 var joystick: Control
 var minimap: Control
+var inventory_panel
+var inventory_button: Button
+var level_label: Label
+var xp_label: Label
+var interaction_hint: Label
 var joy_touch := -1
 var joy_vector := Vector2.ZERO
 var joy_center := Vector2.ZERO
@@ -23,7 +28,7 @@ func _ready():
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 	var status = panel(Vector2(22,20),Vector2(280,82))
-	label(status,"AERVALON  /  Nv. 1",Vector2(16,9),18,Color(0.95,0.85,0.59))
+	level_label = label(status,"AERVALON  /  Nv. 1",Vector2(16,9),18,Color(0.95,0.85,0.59))
 	health = ProgressBar.new()
 	health.position = Vector2(16,39)
 	health.size = Vector2(248,24)
@@ -32,6 +37,7 @@ func _ready():
 	health.add_theme_stylebox_override("fill",box(Color(0.65,0.12,0.12),5))
 	status.add_child(health)
 	health_text = label(status,"100 / 100",Vector2(103,40),16)
+	xp_label = label(root,"",Vector2(26,101),14,Color.LIGHT_SKY_BLUE)
 	var quest_panel = panel(Vector2(22,116),Vector2(295,78))
 	quest = label(quest_panel,"",Vector2(14,10),17,Color(0.96,0.87,0.65))
 	coins = label(root,"",Vector2(26,205),16,Color(0.95,0.82,0.52))
@@ -50,6 +56,7 @@ func _ready():
 	message_body = label(message_panel,"",Vector2(18,43),18)
 	message_body.size = Vector2(534,76)
 	message_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	interaction_hint = label(root,"",Vector2.ZERO,17,Color("f0d18c"))
 	minimap = Control.new()
 	minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(minimap)
@@ -57,6 +64,11 @@ func _ready():
 	portrait_warning = panel(Vector2.ZERO,Vector2(380,95))
 	label(portrait_warning,"Gire o celular para jogar",Vector2(20,15),24,Color(1,0.86,0.55))
 	label(portrait_warning,"Aervalon foi feito para a tela deitada.",Vector2(20,52),17)
+	inventory_button = button("Mochila",Vector2(128,54),Color(0.14,0.19,0.16))
+	inventory_button.pressed.connect(func(): open_inventory())
+	inventory_panel = PanelContainer.new()
+	inventory_panel.set_script(preload("res://scripts/inventory_panel.gd"))
+	root.add_child(inventory_panel)
 	get_viewport().size_changed.connect(layout)
 	layout()
 func box(color: Color, radius: int) -> StyleBoxFlat:
@@ -102,20 +114,37 @@ func layout():
 	attack_button.position = size-Vector2(145,155)
 	interact_button.position = size-Vector2(252,123)
 	message_panel.position = Vector2((size.x-570)*0.5,size.y-155)
+	interaction_hint.position = Vector2(size.x-295,size.y-195)
 	minimap.position = Vector2(size.x-184,24)
 	portrait_warning.position = size*0.5-Vector2(190,47)
 	portrait_warning.visible = size.y>size.x
+	inventory_button.position = Vector2(size.x-170,140)
+	inventory_panel.size = Vector2(minf(850,size.x-100),minf(470,size.y-64))
+	inventory_panel.position = (size-inventory_panel.size)*0.5
 	joystick.queue_redraw()
+func open_inventory(shop_id := ""):
+	if world.player.death_time>0: return
+	inventory_panel.open(shop_id)
 func refresh():
+	health.max_value = world.player.max_health
 	health.value = world.player.health
-	health_text.text = "%d / 100" % world.player.health
+	level_label.text = "AERVALON  /  Nv. %d" % world.rpg.level
+	xp_label.text = "XP %d / %d" % [world.rpg.xp,world.rpg.xp_needed()]
+	health_text.text = "%d / %d" % [world.player.health,world.player.max_health]
 	quest.text = world.quest_text()
+	interaction_hint.text = world.nearest_npc.npc_name if world.nearest_npc and not world.modal_open else ""
 	coins.text = "%d moedas" % world.coins
-	message_panel.visible = world.message_time>0
-	interact_button.text = "Falar" if world.nearest_npc else "Usar"
+	message_panel.visible = world.message_time>0 and not world.modal_open
+	interact_button.text = ("Loja" if world.nearest_npc.appearance in ["borin","merchant"] else "Falar") if world.nearest_npc else "Usar"
 	attack_button.modulate = Color(0.7,0.7,0.7) if world.player.attack_cooldown>0 else Color.WHITE
 	minimap.queue_redraw()
 func _input(event):
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode==KEY_ESCAPE and world.modal_open: inventory_panel.close()
+		elif event.physical_keycode==KEY_I:
+			if world.modal_open: inventory_panel.close()
+			else: open_inventory()
+	if world.modal_open: return
 	if event is InputEventScreenTouch:
 		if event.pressed and event.position.distance_to(joy_center)<100 and joy_touch == -1:
 			joy_touch = event.index

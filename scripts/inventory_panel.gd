@@ -144,6 +144,7 @@ func refresh_detail():
 		selected=""
 		detail.text="Selecione um item.\n\nArma: %s\nArmadura: %s" % [r.ITEMS.get(r.equipment.weapon,{"name":"Nenhuma"}).name,r.ITEMS.get(r.equipment.armor,{"name":"Nenhuma"}).name]
 		action.disabled=true
+		action.text="Selecione um item"
 		equip_action.visible=false
 		return
 	var item = r.ITEMS[selected]

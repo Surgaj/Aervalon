@@ -6,13 +6,17 @@ const assert = require('node:assert/strict');
   fs.mkdirSync('qa', { recursive: true });
   const server = spawn('python3', ['-m', 'http.server', '8765', '--directory', 'build/web']);
   let browser;
+  let page;
   const errors = [];
   try {
     browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--use-angle=swiftshader', '--no-sandbox'] });
-    const page = await browser.newPage({ viewport: { width: 1280, height: 720 }, hasTouch: true });
+    page = await browser.newPage({ viewport: { width: 1280, height: 720 }, hasTouch: true });
     page.on('pageerror', error => errors.push(error.message));
-    page.on('console', msg => { if (/SCRIPT ERROR|Parse Error|ERROR:/.test(msg.text())) errors.push(msg.text()); });
+    page.on('console', msg => { console.log('BROWSER:',msg.type(),msg.text()); if (/SCRIPT ERROR|Parse Error|ERROR:/.test(msg.text())) errors.push(msg.text()); });
     await page.goto('http://127.0.0.1:8765/?qa=1');
+    await page.waitForTimeout(3000);
+    await page.screenshot({path:'qa/startup.png'});
+    console.log('STARTUP DOM:',await page.locator('body').innerText());
     await page.waitForFunction(() => !!document.querySelector('canvas')?.dataset.aervalon, null, { timeout: 60000 });
     const readState = () => page.locator('canvas').evaluate(el => JSON.parse(el.dataset.aervalon));
     await page.waitForTimeout(1500);
@@ -49,6 +53,12 @@ const assert = require('node:assert/strict');
     assert.deepEqual(errors, [], 'No Godot or JavaScript runtime errors');
     fs.writeFileSync('qa/browser-result.json', JSON.stringify({passed:true,errors,viewports:['1280x720','844x390','390x844']},null,2));
     console.log('PASS: WebGL2 startup, keyboard interaction/attack, landscape/portrait layout, multitouch input, no runtime errors');
+  } catch(error) {
+    if(page) {
+      await page.screenshot({path:"qa/failure.png"}).catch(()=>{});
+      console.log("FAILURE DOM:",await page.locator("body").innerText().catch(()=>"unavailable"));
+    }
+    throw error;
   } finally {
     if (browser) await browser.close();
     server.kill();

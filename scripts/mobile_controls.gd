@@ -39,8 +39,9 @@ func _ready():
 	joystick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(joystick)
 	joystick.draw.connect(_draw_joystick)
-	attack_button = button("⚔",Vector2(108,108),Color(0.35,0.065,0.07))
-	attack_button.add_theme_font_size_override("font_size",40)
+	attack_button = button("",Vector2(108,108),Color(0.35,0.065,0.07))
+	attack_button.icon = load("res://assets/aervalon/ui/sword.svg")
+	attack_button.add_theme_constant_override("icon_max_width",46)
 	attack_button.button_down.connect(func(): world.player.attack())
 	interact_button = button("Falar",Vector2(86,86),Color(0.11,0.18,0.17))
 	interact_button.button_down.connect(func(): world.interact_nearby())

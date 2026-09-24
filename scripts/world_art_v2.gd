@@ -9,11 +9,11 @@ func _ready():
 	yworld = get_parent().get_node("YSortWorld")
 	terrain = get_parent().get_node("Terrain")
 	ground("grass",Rect2(0,0,1900,1100),false,Color(0.58,0.68,0.51))
-	ground("cobble",Rect2(180,260,700,650),true,Color(0.86,0.83,0.76))
+	ground("cobble",Rect2(180,260,700,650),true,Color(0.94,0.92,0.84))
 	ground("dirt",Rect2(1025,505,780,220),true,Color(0.87,0.83,0.72))
 	var river = ground("water",Rect2(915,0,145,1100),false,Color(0.65,0.9,0.92))
 	var water_shader = Shader.new()
-	water_shader.code = "shader_type canvas_item; void fragment(){ vec2 uv=UV+vec2(sin(UV.y*26.0+TIME)*0.009,TIME*0.018); COLOR=texture(TEXTURE,uv)*COLOR; }"
+	water_shader.code = "shader_type canvas_item; varying vec4 tint; void vertex(){tint=COLOR;} void fragment(){ vec2 uv=UV+vec2(sin(UV.y*26.0+TIME)*0.009,TIME*0.018); COLOR=texture(TEXTURE,uv)*tint; }"
 	var material = ShaderMaterial.new()
 	material.shader = water_shader
 	river.material = material
@@ -55,14 +55,14 @@ func ground(asset: String, rect: Rect2, feather: bool, tint: Color) -> Sprite2D:
 	sprite.texture = load(ROOT+asset+".png")
 	sprite.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	sprite.region_enabled = true
-	sprite.region_rect = Rect2(Vector2.ZERO,rect.size*2)
-	sprite.scale = Vector2.ONE*0.5
+	sprite.region_rect = Rect2(Vector2.ZERO,rect.size*4)
+	sprite.scale = Vector2.ONE*0.25
 	sprite.position = rect.get_center()
 	sprite.modulate = tint
 	terrain.add_child(sprite)
 	if feather:
 		var shader = Shader.new()
-		shader.code = "shader_type canvas_item; varying vec2 local; void vertex(){local=VERTEX;} void fragment(){vec4 c=texture(TEXTURE,UV)*COLOR; vec2 a=abs(local)/vec2(%f,%f); float e=max(a.x,a.y); c.a*=1.0-smoothstep(0.75,1.0,e); COLOR=c;}" % [rect.size.x,rect.size.y]
+		shader.code = "shader_type canvas_item; varying vec2 local; varying vec4 tint; void vertex(){local=VERTEX;tint=COLOR;} void fragment(){vec4 c=texture(TEXTURE,UV)*tint; vec2 a=abs(local)/vec2(%f,%f); float e=max(a.x,a.y); c.a*=1.0-smoothstep(0.75,1.0,e); COLOR=c;}" % [rect.size.x*2,rect.size.y*2]
 		var mat = ShaderMaterial.new()
 		mat.shader = shader
 		sprite.material = mat

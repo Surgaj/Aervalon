@@ -4,12 +4,12 @@ set -euo pipefail
 SRC="${1:?pass generated_images directory}"
 OUT="assets/aervalon/v2"
 mkdir -p "$OUT"
-convert "$SRC/exec-a6b20b56-4372-482c-a65f-dc797dbc18e9.png" -alpha on -fuzz 23% -transparent '#ff00ff' /tmp/aervalon-props.png
+convert "$SRC/exec-a6b20b56-4372-482c-a65f-dc797dbc18e9.png" -alpha on -fuzz 35% -transparent '#ff00ff' /tmp/aervalon-props.png
 names=(house forge tree market bridge supplies flowers well)
 rects=(400x550+0+0 405x550+400+0 405x550+798+0 333x550+1203+0 515x460+0+560 310x460+515+560 390x460+825+560 321x460+1215+560)
 for i in "${!names[@]}"; do convert /tmp/aervalon-props.png -crop "${rects[$i]}" +repage -trim +repage "$OUT/${names[$i]}.png"; done
-convert "$SRC/exec-9bddd552-dd55-4f6d-a9df-7dfcac35ac1f.png" -alpha on -fuzz 23% -transparent '#ff00ff' -resize 2048x1024! "$OUT/hero.png"
-convert "$SRC/exec-7530b7bd-26f5-4be4-a448-b4224a57e05c.png" -alpha on -fuzz 23% -transparent '#ff00ff' /tmp/aervalon-cast.png
+convert "$SRC/exec-9bddd552-dd55-4f6d-a9df-7dfcac35ac1f.png" -alpha on -fuzz 35% -transparent '#ff00ff' -resize 2048x1024! "$OUT/hero.png"
+convert "$SRC/exec-7530b7bd-26f5-4be4-a448-b4224a57e05c.png" -alpha on -fuzz 35% -transparent '#ff00ff' /tmp/aervalon-cast.png
 # Source rows are intentionally measured rather than assuming perfect AI grid alignment.
 convert /tmp/aervalon-cast.png -crop 1536x225+0+0 +repage -resize 1536x256! "$OUT/wolf_down.png"
 convert /tmp/aervalon-cast.png -crop 1536x225+0+225 +repage -resize 1536x256! "$OUT/wolf_up.png"

@@ -49,6 +49,10 @@ func set_state(value: String, facing: Vector2):
 	var row = 0
 	if kind == "hero":
 		row = (1 if facing.x < 0 else 2) if absf(facing.x)>absf(facing.y) else (3 if facing.y<0 else 0)
+		flip_h = false
+		if value == "attack" and absf(facing.x)>absf(facing.y):
+			row = 0
+			flip_h = facing.x<0
 	elif kind == "wolf":
 		row = 1 if facing.y < -0.4 else 0
 		flip_h = facing.x < 0 if row == 0 else facing.x > 0

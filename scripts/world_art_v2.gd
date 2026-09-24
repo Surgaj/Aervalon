@@ -40,7 +40,7 @@ func _ready():
 		var width = variation.randf_range(188,236)
 		var tree = prop("tree",point+Vector2(variation.randf_range(-16,16),variation.randf_range(-10,10)),width,Vector2(27,24))
 		var cutout = Shader.new()
-		cutout.code = "shader_type canvas_item; void fragment(){ vec4 c=texture(TEXTURE,UV)*COLOR; if(UV.y>0.72 && (UV.x<0.02 || UV.x>0.95)){c.a=0.0;} COLOR=c; }"
+		cutout.code = "shader_type canvas_item; varying vec4 tint; void vertex(){tint=COLOR;} void fragment(){ vec4 c=texture(TEXTURE,UV)*tint; if(UV.y>0.72 && (UV.x<0.02 || UV.x>0.95)){c.a=0.0;} COLOR=c; }"
 		var tree_mat = ShaderMaterial.new()
 		tree_mat.shader = cutout
 		tree.material = tree_mat

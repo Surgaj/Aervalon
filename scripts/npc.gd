@@ -1,30 +1,40 @@
 extends CharacterBody2D
 @export var npc_name := "Morador"
 @export var role := "A vida continua em Eryndor."
-@export var wander_radius := 55.0
-@export var speed := 28.0
+@export var appearance := "mara"
+@export var wander_radius := 35.0
+@export var speed := 25.0
 var origin := Vector2.ZERO
 var target := Vector2.ZERO
 var wait := 0.0
+var facing := Vector2.DOWN
+var conversation := 0.0
 func _ready():
 	origin = global_position
-	_pick_target()
+	target = origin
+	$Visual.setup(appearance)
 func _physics_process(delta):
+	conversation = maxf(0,conversation-delta)
+	if conversation>0:
+		$Visual.set_state("idle",facing)
+		return
+	if appearance == "borin":
+		$Visual.set_state("work",Vector2.DOWN)
+		return
 	wait -= delta
-	if wait > 0.0:
-		velocity = Vector2.ZERO
+	if wait>0:
+		$Visual.set_state("idle",facing)
 		return
-	if global_position.distance_to(target) < 5.0:
-		wait = 1.5 + randf() * 2.5
-		_pick_target()
+	if global_position.distance_to(target)<5:
+		wait = randf_range(1.5,3)
+		target = origin+Vector2(randf_range(-wander_radius,wander_radius),randf_range(-wander_radius,wander_radius)*0.5)
 		return
-	velocity = global_position.direction_to(target) * speed
+	velocity = global_position.direction_to(target)*speed
+	facing = velocity.normalized()
 	move_and_slide()
-	if velocity.length() > 1.0:
-		$Visual.rotation = sin(Time.get_ticks_msec() * 0.012) * 0.035
-func _pick_target():
-	target = origin + Vector2(randf_range(-wander_radius,wander_radius),randf_range(-wander_radius,wander_radius))
+	$Visual.set_state("walk",facing)
 func interact():
-	var ui = get_tree().get_first_node_in_group("world_ui")
-	if ui and ui.has_method("show_message"):
-		ui.show_message(npc_name, role)
+	conversation = 5
+	var world = get_tree().current_scene
+	facing = global_position.direction_to(world.player.global_position)
+	world.npc_dialogue(self)

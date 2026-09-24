@@ -38,7 +38,7 @@ func _ready():
 	player.health = player.max_health
 	spawn_npc("Mara","mara",Vector2(650,540),25)
 	spawn_npc("Borin, o ferreiro","borin",Vector2(670,339),0)
-	spawn_npc("Nilo, mercador","merchant",Vector2(455,660),0)
+	spawn_npc("Nilo, mercador","merchant",Vector2(490,665),0)
 	spawn_npc("Eldric","eldric",Vector2(585,795),20)
 	spawn_npc("Guarda de Eryndor","guard",Vector2(827,560),35)
 	spawn_npc("Galinha","hen",Vector2(440,530),40)
@@ -84,7 +84,7 @@ func _process(delta):
 		qa_clock += delta
 		if qa_clock>0.1:
 			qa_clock = 0
-			var state = {"position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory}
+			var state = {"position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"buttons":hud.inventory_panel.qa_buttons()}
 			JavaScriptBridge.eval("document.querySelector('canvas').dataset.aervalon="+JSON.stringify(JSON.stringify(state)), true)
 func interact_nearby():
 	if player.death_time>0 or modal_open: return

@@ -50,7 +50,7 @@ func _ready():
 	column.add_child(categories)
 	for title in ["Todos","Consumíveis","Materiais","Equipamentos","Itens de missão"]:
 		var button = make_button(title)
-		button.add_theme_font_size_override("font_size",15)
+		button.add_theme_font_size_override("font_size",17)
 		button.pressed.connect(func(): category=title; selected=""; refresh())
 		categories.add_child(button)
 	var body = HBoxContainer.new()
@@ -89,7 +89,7 @@ func _ready():
 func make_button(text: String) -> Button:
 	var button = Button.new()
 	button.text = text
-	button.custom_minimum_size.y = 48
+	button.custom_minimum_size.y = 60
 	button.add_theme_font_size_override("font_size",18)
 	return button
 func open(shop_id := ""):
@@ -98,7 +98,7 @@ func open(shop_id := ""):
 	mode = "Comprar" if shop!="" else "Mochila"
 	category = "Todos"
 	selected = ""
-	feedback.text = "Toque em um item para ver os detalhes."
+	feedback.text = "Borin: uma boa lâmina faz diferença." if shop=="borin" else ("Nilo: provisões para a estrada, viajante?" if shop=="merchant" else "Toque em um item para ver os detalhes.")
 	world.modal_open = true
 	world.player.set_touch_direction(Vector2.ZERO)
 	world.player.attack_time = 0
@@ -131,7 +131,7 @@ func refresh():
 		button.icon = load("res://assets/aervalon/ui/"+item.icon+".svg")
 		button.expand_icon = true
 		button.add_theme_constant_override("icon_max_width",26)
-		button.add_theme_font_size_override("font_size",15)
+		button.add_theme_font_size_override("font_size",17)
 		button.custom_minimum_size = Vector2(120,110)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		button.pressed.connect(func(): selected=id; refresh_detail())
@@ -158,3 +158,12 @@ func transact():
 	else: feedback.text=world.use_item(selected)
 	world.persist()
 	refresh()
+
+func qa_buttons() -> Dictionary:
+	var result := {}
+	if not visible: return result
+	for button in find_children("*","Button",true,false):
+		if button.is_visible_in_tree() and not button.disabled:
+			var point = button.get_global_rect().get_center()
+			result[button.text] = [point.x,point.y]
+	return result

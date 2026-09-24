@@ -39,6 +39,11 @@ func _ready():
 	for point in [Vector2(150,270),Vector2(155,600),Vector2(150,940),Vector2(380,980),Vector2(700,1010),Vector2(820,265),Vector2(1110,275),Vector2(1300,330),Vector2(1510,300),Vector2(1730,380),Vector2(1820,600),Vector2(1170,890),Vector2(1390,950),Vector2(1630,870),Vector2(590,205),Vector2(350,160),Vector2(1700,1040),Vector2(1850,950),Vector2(1490,145),Vector2(1220,130)]:
 		var width = variation.randf_range(188,236)
 		var tree = prop("tree",point+Vector2(variation.randf_range(-16,16),variation.randf_range(-10,10)),width,Vector2(27,24))
+		var cutout = Shader.new()
+		cutout.code = "shader_type canvas_item; void fragment(){ vec4 c=texture(TEXTURE,UV)*COLOR; if(UV.y>0.72 && (UV.x<0.02 || UV.x>0.95)){c.a=0.0;} COLOR=c; }"
+		var tree_mat = ShaderMaterial.new()
+		tree_mat.shader = cutout
+		tree.material = tree_mat
 		tree.flip_h = variation.randf()>0.5
 		tree.modulate = Color(variation.randf_range(0.90,1.0),variation.randf_range(0.92,1.0),variation.randf_range(0.88,1.0))
 		trees.append(tree)

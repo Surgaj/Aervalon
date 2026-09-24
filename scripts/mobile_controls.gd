@@ -119,8 +119,10 @@ func layout():
 	portrait_warning.position = size*0.5-Vector2(190,47)
 	portrait_warning.visible = size.y>size.x
 	inventory_button.position = Vector2(size.x-170,140)
-	inventory_panel.size = Vector2(minf(850,size.x-100),minf(470,size.y-64))
-	inventory_panel.position = (size-inventory_panel.size)*0.5
+	var ui_scale = clampf(size.x/1150.0,1.0,1.35)
+	inventory_panel.scale = Vector2.ONE*ui_scale
+	inventory_panel.size = Vector2(minf(930,(size.x-64)/ui_scale),minf(500,(size.y-64)/ui_scale))
+	inventory_panel.position = (size-inventory_panel.size*ui_scale)*0.5
 	joystick.queue_redraw()
 func open_inventory(shop_id := ""):
 	if world.player.death_time>0: return

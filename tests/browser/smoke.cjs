@@ -33,6 +33,44 @@ const assert = require('node:assert/strict');
     await page.keyboard.press('Space');
     await page.waitForTimeout(150);
     await page.screenshot({ path: 'qa/eryndor-attack.png' });
+    // Walk to the actual merchant, interact, then buy through rendered buttons.
+    async function walkAxis(axis,target,keyPositive,keyNegative) {
+      const state=await readState();
+      const offset=target-state.position[axis];
+      const key=offset>0?keyPositive:keyNegative;
+      await page.keyboard.down(key);
+      await page.waitForTimeout(Math.abs(offset)/170*1000);
+      await page.keyboard.up(key);
+      await page.waitForTimeout(150);
+    }
+    await walkAxis(0,500,'d','a');
+    await walkAxis(1,650,'s','w');
+    await page.keyboard.press('e');
+    await page.waitForTimeout(250);
+    assert.equal((await readState()).shop,'merchant','Nearby merchant opens actual shop');
+    async function pressUI(prefix) {
+      const state=await readState();
+      const entry=Object.entries(state.buttons).find(([text])=>text.startsWith(prefix));
+      assert.ok(entry,'Visible UI button: '+prefix);
+      const bounds=await page.locator('canvas').boundingBox();
+      await page.mouse.click(bounds.x+entry[1][0]/state.viewport[0]*bounds.width,bounds.y+entry[1][1]/state.viewport[1]*bounds.height);
+      await page.waitForTimeout(200);
+    }
+    await pressUI('Poção');
+    await pressUI('Comprar •');
+    assert.equal((await readState()).coins,4,'Shop UI deducts potion price');
+    assert.equal((await readState()).inventory.potion,3,'Shop UI adds bought potion');
+    await page.screenshot({path:'qa/shop-merchant.png'});
+    await page.keyboard.press('Escape');
+    await walkAxis(1,470,'s','w');
+    await walkAxis(0,670,'d','a');
+    await page.keyboard.press('e');
+    await page.waitForTimeout(250);
+    assert.equal((await readState()).shop,'borin','Borin is reachable from the forge frontage');
+    await page.screenshot({path:'qa/shop-borin.png'});
+    await page.keyboard.press('Escape');
+    // Return to open village ground for the mobile joystick test.
+    await walkAxis(1,600,'s','w');
     await page.setViewportSize({ width: 844, height: 390 });
     await page.waitForTimeout(400);
     await page.screenshot({ path: 'qa/eryndor-mobile.png' });

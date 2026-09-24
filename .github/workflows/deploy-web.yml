@@ -1,4 +1,4 @@
-name: Build, test and publish Eryndor preview
+name: Build and Deploy Aervalon Web
 
 on:
   push:
@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
   pages: write
   id-token: write
 
@@ -62,41 +61,44 @@ jobs:
           name: aervalon-browser-qa
           path: qa/
 
-      - name: Preserve published stable build and add immutable preview
+      - name: Save tested Web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: aervalon-web-${{ github.sha }}
+          path: build/web/
+          retention-days: 14
+
+      - name: Create immutable build path
         id: version
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          set -euo pipefail
-          # Only restore successfully deployed main releases or this preview workflow.
-          RUN=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?status=success&per_page=50" --jq '.workflow_runs | map(select(.head_branch == "main" or .name == "Build, test and publish Eryndor preview")) | .[0].id')
-          test -n "$RUN" && test "$RUN" != null
-          ARTIFACT=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$RUN/artifacts" --jq '.artifacts[] | select(.name == "github-pages" and .expired == false) | .id')
-          test -n "$ARTIFACT"
-          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT/zip" > /tmp/published.zip
-          mkdir -p public /tmp/published
-          unzip -q /tmp/published.zip -d /tmp/published
-          tar -xf /tmp/published/artifact.tar -C public
-          test -f public/index.html
-          sha256sum public/index.html > /tmp/stable-root.sha
-          BUILD_DIR="build-${GITHUB_RUN_NUMBER}-${GITHUB_SHA::8}"
+          SHORT_SHA="${GITHUB_SHA::8}"
+          BUILD_DIR="build-${GITHUB_RUN_NUMBER}-${SHORT_SHA}"
           echo "build_dir=$BUILD_DIR" >> "$GITHUB_OUTPUT"
-          mkdir -p "public/preview-v2/$BUILD_DIR"
-          cp -r build/web/. "public/preview-v2/$BUILD_DIR/"
-          cat > public/preview-v2/index.html <<EOF
-          <!doctype html><html><head><meta charset="utf-8">
-          <meta http-equiv="cache-control" content="no-store">
-          <meta http-equiv="refresh" content="0;url=./$BUILD_DIR/">
-          <title>Aervalon — Eryndor</title></head><body>
-          <a href="./$BUILD_DIR/">Jogar Aervalon</a>
-          <script>location.replace("./$BUILD_DIR/"+location.search);</script>
+          mkdir -p "public/$BUILD_DIR"
+          cp -r "build/web/." "public/$BUILD_DIR/"
+          touch "public/$BUILD_DIR/.nojekyll"
+          test -f "public/$BUILD_DIR/index.html"
+          test -f "public/$BUILD_DIR/index.pck"
+          test -f "public/$BUILD_DIR/index.wasm"
+          PCK_SIZE=$(stat -c%s "public/$BUILD_DIR/index.pck")
+          echo "Published immutable build: $BUILD_DIR (PCK $PCK_SIZE bytes)"
+
+          cat > public/index.html <<EOF
+          <!doctype html>
+          <html><head>
+          <meta charset="utf-8">
+          <meta http-equiv="cache-control" content="no-store, no-cache, must-revalidate">
+          <meta http-equiv="pragma" content="no-cache">
+          <meta http-equiv="expires" content="0">
+          <meta http-equiv="refresh" content="0; url=./$BUILD_DIR/">
+          <title>Aervalon</title>
+          </head><body>
+          <p>Loading Aervalon...</p>
+          <script>location.replace("./$BUILD_DIR/");</script>
           </body></html>
           EOF
           touch public/.nojekyll
-          test -f "public/preview-v2/$BUILD_DIR/index.pck"
-          test -f "public/preview-v2/$BUILD_DIR/index.wasm"
-          sha256sum -c /tmp/stable-root.sha
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

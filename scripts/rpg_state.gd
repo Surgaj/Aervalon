@@ -1,6 +1,7 @@
 extends RefCounted
 # IDs are stable save keys. Definitions can grow without changing the save schema.
 const ITEMS = {
+	"river_herb": {"name":"Erva de Orvalho", "type":"Consumíveis", "heal":15, "price":0, "value":2, "icon":"herb", "description":"Colhida no vale. Recupera 15 de vida."},
 	"rusty_sword": {"name":"Espada Enferrujada", "type":"Equipamentos", "slot":"weapon", "attack":5, "price":8, "value":3, "icon":"sword", "description":"Uma lâmina gasta. Ataque +5."},
 	"iron_sword": {"name":"Espada de Ferro", "type":"Equipamentos", "slot":"weapon", "attack":18, "price":38, "value":15, "icon":"sword", "description":"Forjada por Borin. Ataque +18."},
 	"leather_armor": {"name":"Armadura Simples", "type":"Equipamentos", "slot":"armor", "defense":3, "price":24, "value":9, "icon":"armor", "description":"Couro reforçado. Defesa +3."},
@@ -19,6 +20,9 @@ var equipment := {"weapon":"rusty_sword", "armor":""}
 var quest := "available"
 var kills := 0
 var chest_open := false
+var herbalism := 0
+var harvested := {}
+var discoveries := {}
 var save_enabled := true
 var save_path := "user://eryndor_rpg_v1.json"
 func xp_needed() -> int: return 60 + (level-1)*35
@@ -57,7 +61,7 @@ func equip(id: String) -> bool:
 	equipment[ITEMS[id].slot] = id
 	return true
 func snapshot() -> Dictionary:
-	return {"version":1,"level":level,"xp":xp,"coins":coins,"inventory":inventory.duplicate(),"equipment":equipment.duplicate(),"quest":quest,"kills":kills,"chest_open":chest_open}
+	return {"version":1,"level":level,"xp":xp,"coins":coins,"inventory":inventory.duplicate(),"equipment":equipment.duplicate(),"quest":quest,"kills":kills,"chest_open":chest_open,"herbalism":herbalism,"harvested":harvested.duplicate(),"discoveries":discoveries.duplicate()}
 func restore(data) -> bool:
 	if not data is Dictionary or data.get("version",0)!=1: return false
 	if not data.get("inventory") is Dictionary or not data.get("equipment") is Dictionary: return false
@@ -81,6 +85,19 @@ func restore(data) -> bool:
 	if quest in ["return","complete"]: kills=3
 	if quest=="active" and kills==3: quest="return"
 	chest_open = bool(data.get("chest_open",false))
+	herbalism = 0
+	if data.get("herbalism",0) is int or data.get("herbalism",0) is float:
+		herbalism = clampi(int(data.get("herbalism",0)),0,9999)
+	harvested.clear()
+	if data.get("harvested",{}) is Dictionary:
+		var now = Time.get_unix_time_from_system()
+		for id in ["herb_village","herb_bank","herb_forest"]:
+			var stamp = data.get("harvested",{}).get(id,0)
+			if (stamp is float or stamp is int) and is_finite(float(stamp)) and float(stamp)>now:
+				harvested[id] = minf(float(stamp),now+120.0)
+	discoveries.clear()
+	if data.get("discoveries",{}) is Dictionary and data.get("discoveries",{}).get("well_echo",false)==true:
+		discoveries["well_echo"] = true
 	return true
 func save_game() -> bool:
 	if not save_enabled: return true

@@ -19,6 +19,7 @@ var message_time := 0.0
 var qa_enabled := false
 var qa_clock := 0.0
 var nearest_npc
+var nearest_object
 func _ready():
 	rpg.save_enabled = not "--test" in OS.get_cmdline_user_args()
 	rpg.load_game()
@@ -31,6 +32,11 @@ func _ready():
 		var key = InputEventKey.new()
 		key.physical_keycode = KEY_E
 		InputMap.action_add_event("interact",key)
+	if not InputMap.has_action("dodge"):
+		InputMap.add_action("dodge")
+		var key = InputEventKey.new()
+		key.physical_keycode = KEY_SHIFT
+		InputMap.action_add_event("dodge",key)
 	player = PLAYER.instantiate()
 	player.position = Vector2(610,590)
 	$YSortWorld.add_child(player)
@@ -53,13 +59,20 @@ func _ready():
 	chest.position = Vector2(1620,940)
 	chest.scale = Vector2.ONE*0.25
 	$YSortWorld.add_child(chest)
+	if chest_open: chest.modulate = Color(0.5,0.5,0.5)
+	for entry in [["herb_village",Vector2(745,700)],["herb_bank",Vector2(1150,735)],["herb_forest",Vector2(1530,790)],["well_echo",Vector2(695,829)]]:
+		var resource = Node2D.new()
+		resource.set_script(preload("res://scripts/world_interaction.gd"))
+		resource.resource_id = entry[0]
+		resource.position = entry[1]
+		$YSortWorld.add_child(resource)
 	hud = CanvasLayer.new()
 	hud.set_script(load("res://scripts/mobile_controls.gd"))
 	add_child(hud)
 	if OS.has_feature("web"):
 		qa_enabled = "qa=1" in str(JavaScriptBridge.eval("window.location.search", true))
 		print("Aervalon Web QA enabled: ", qa_enabled)
-	show_message("Vale de Eryndor","Fale com Mara junto à ponte. WASD / setas para andar • E para falar • Espaço para atacar.")
+	show_message("Vale de Eryndor","Fale com Mara junto à ponte. WASD / setas para andar • E para falar • Espaço: atacar • Shift: esquivar.")
 func spawn_npc(title: String, appearance: String, point: Vector2, radius: float):
 	var npc = NPC.instantiate()
 	npc.npc_name = title
@@ -79,16 +92,25 @@ func _process(delta):
 		if distance<best:
 			best = distance
 			nearest_npc = npc
+	nearest_object = null
+	for object in get_tree().get_nodes_in_group("world_interaction"):
+		var distance = player.global_position.distance_to(object.global_position)
+		if distance<minf(best,80) and object.can_reach(player):
+			best = distance
+			nearest_object = object
+			nearest_npc = null
 	if is_instance_valid(hud): hud.refresh()
 	if qa_enabled:
 		qa_clock += delta
 		if qa_clock>0.1:
 			qa_clock = 0
-			var state = {"position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"buttons":hud.inventory_panel.qa_buttons()}
+			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"buttons":hud.inventory_panel.qa_buttons()}
 			JavaScriptBridge.eval("document.querySelector('canvas').dataset.aervalon="+JSON.stringify(JSON.stringify(state)), true)
 func interact_nearby():
 	if player.death_time>0 or modal_open: return
-	if nearest_npc:
+	if nearest_object:
+		nearest_object.interact()
+	elif nearest_npc:
 		nearest_npc.interact()
 	elif player.global_position.distance_to(Vector2(1620,940))<95:
 		if not chest_open:
@@ -121,7 +143,7 @@ func npc_dialogue(npc):
 		"merchant":
 			hud.open_inventory("merchant")
 			show_message("Nilo", "Pão fresco e poções para a estrada. Posso comprar o que encontrou na floresta.")
-		"eldric": show_message("Eldric","Eryndor é só o começo. Além da floresta, as ruínas de Thal’Kor ainda guardam suas histórias.")
+		"eldric": show_message("Eldric","Você também ouviu? Eu conheço este poço desde menino. Nunca houve outro som além da água. Não sabemos o que existe lá embaixo." if rpg.discoveries.has("well_echo") else "Desde o tremor, às vezes o poço responde antes de a água cair. Escute com calma, se passar por lá.")
 		_: show_message(npc.npc_name,"Mara precisa de ajuda. A estrada do outro lado da ponte já não é segura.")
 	persist()
 func _enemy_died(wolf = null):

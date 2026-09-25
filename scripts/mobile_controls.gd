@@ -7,6 +7,7 @@ var quest: Label
 var message_panel: Panel
 var message_title: Label
 var message_body: Label
+var dodge_button: Button
 var attack_button: Button
 var interact_button: Button
 var portrait_warning: Panel
@@ -49,6 +50,8 @@ func _ready():
 	attack_button.icon = load("res://assets/aervalon/ui/sword.svg")
 	attack_button.add_theme_constant_override("icon_max_width",46)
 	attack_button.button_down.connect(func(): world.player.attack())
+	dodge_button = button("Esquiva",Vector2(86,86),Color(0.13,0.20,0.26))
+	dodge_button.button_down.connect(func(): world.player.dodge())
 	interact_button = button("Falar",Vector2(86,86),Color(0.11,0.18,0.17))
 	interact_button.button_down.connect(func(): world.interact_nearby())
 	message_panel = panel(Vector2.ZERO,Vector2(570,123))
@@ -113,8 +116,9 @@ func layout():
 	joystick.position = joy_center
 	attack_button.position = size-Vector2(145,155)
 	interact_button.position = size-Vector2(252,123)
+	dodge_button.position = size-Vector2(140,263)
 	message_panel.position = Vector2((size.x-570)*0.5,size.y-155)
-	interaction_hint.position = Vector2(size.x-295,size.y-195)
+	interaction_hint.position = Vector2(size.x-380,size.y-195)
 	minimap.position = Vector2(size.x-184,24)
 	portrait_warning.position = size*0.5-Vector2(190,47)
 	portrait_warning.visible = size.y>size.x
@@ -135,9 +139,13 @@ func refresh():
 	health_text.text = "%d / %d" % [world.player.health,world.player.max_health]
 	quest.text = world.quest_text()
 	interaction_hint.text = world.nearest_npc.npc_name if world.nearest_npc and not world.modal_open else ""
+	if world.nearest_object and not world.modal_open: interaction_hint.text = world.nearest_object.title()
 	coins.text = "%d moedas" % world.coins
 	message_panel.visible = world.message_time>0 and not world.modal_open
 	interact_button.text = ("Loja" if world.nearest_npc.appearance in ["borin","merchant"] else "Falar") if world.nearest_npc else "Usar"
+	if world.nearest_object: interact_button.text = world.nearest_object.action_text()
+	dodge_button.text = "%.1f" % world.player.dodge_cooldown if world.player.dodge_cooldown>0 else "Esquiva"
+	dodge_button.modulate = Color(0.7,0.7,0.7) if world.player.dodge_cooldown>0 else Color.WHITE
 	attack_button.modulate = Color(0.7,0.7,0.7) if world.player.attack_cooldown>0 else Color.WHITE
 	minimap.queue_redraw()
 func _input(event):

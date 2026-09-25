@@ -103,6 +103,8 @@ func open(shop_id := ""):
 	world.modal_open = true
 	world.player.set_touch_direction(Vector2.ZERO)
 	world.player.attack_time = 0
+	world.player.dodge_time = 0
+	world.player.visual.rotation = 0
 	world.hud.joy_touch = -1
 	world.hud.joy_vector = Vector2.ZERO
 	world.hud.joystick.queue_redraw()

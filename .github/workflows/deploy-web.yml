@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   pages: write
   id-token: write
 
@@ -30,6 +31,20 @@ jobs:
           godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz
           relative_project_path: ./
           archive_output: false
+
+      - name: Preserve existing published builds
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARTIFACT=$(gh api "repos/$GITHUB_REPOSITORY/actions/artifacts?per_page=100" --jq '[.artifacts[] | select(.workflow_run.head_branch == "main" and (.name | startswith("github-pages")) and .expired == false)] | sort_by(.created_at) | last | .id')
+          test -n "$ARTIFACT" && test "$ARTIFACT" != null
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT/zip" > /tmp/prior-pages.zip
+          mkdir -p public /tmp/prior-pages
+          unzip -q /tmp/prior-pages.zip -d /tmp/prior-pages
+          tar -xf /tmp/prior-pages/artifact.tar -C public
+          test -f public/index.html
 
       - name: Create immutable build path
         id: version
@@ -82,14 +97,28 @@ jobs:
       - name: Publish V2 preview path
         shell: bash
         run: |
-          rm -rf public/preview-v2
-          mkdir -p public/preview-v2
-          cp -r "$HOME/.local/share/godot/builds/Web/." public/preview-v2/
+          set -euo pipefail
+          PREVIEW_SHA=$(git -C preview-src rev-parse --short=8 HEAD)
+          PREVIEW_DIR="build-$PREVIEW_SHA"
+          if [ ! -d "public/preview-v2/$PREVIEW_DIR" ]; then
+            mkdir -p "public/preview-v2/$PREVIEW_DIR"
+            cp -r "$HOME/.local/share/godot/builds/Web/." "public/preview-v2/$PREVIEW_DIR/"
+          fi
           touch public/preview-v2/.nojekyll
-          test -f public/preview-v2/index.html
-          test -f public/preview-v2/index.pck
-          test -f public/preview-v2/index.wasm
-          echo "V2 preview staged at /preview-v2/"
+          test -f "public/preview-v2/$PREVIEW_DIR/index.html"
+          test -f "public/preview-v2/$PREVIEW_DIR/index.pck"
+          test -f "public/preview-v2/$PREVIEW_DIR/index.wasm"
+          cat > public/preview-v2/index.html <<EOF
+          <!doctype html><html><head><meta charset="utf-8">
+          <meta http-equiv="cache-control" content="no-store">
+          <meta http-equiv="refresh" content="0;url=./$PREVIEW_DIR/">
+          <title>Aervalon — Eryndor</title></head><body>
+          <a href="./$PREVIEW_DIR/">Jogar Aervalon</a>
+          <script>location.replace("./$PREVIEW_DIR/"+location.search);</script>
+          </body></html>
+          EOF
+          echo "V2 preview staged at /preview-v2/$PREVIEW_DIR/"
+
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -98,6 +127,8 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
+          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+          retention-days: 14
 
   deploy:
     environment:
@@ -109,3 +140,5 @@ jobs:
       - name: Deploy immutable build to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}

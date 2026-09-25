@@ -121,5 +121,70 @@ func run():
 	check(not world.quest_started,"Crossing coordinates never starts the quest")
 	world._enemy_died()
 	check(world.quest_kills==0 and not world.quest_started,"Kills before conversation do not start quest")
+	# New systems must not erase the legacy progression or bypass world geometry.
+	for foe in enemies: foe.set_physics_process(false)
+	var legacy = world.rpg.snapshot()
+	for field in ["herbalism","harvested","discoveries"]: legacy.erase(field)
+	var migrated = load("res://scripts/rpg_state.gd").new()
+	check(migrated.restore(legacy) and migrated.equipment==world.rpg.equipment and migrated.herbalism==0 and migrated.discoveries.is_empty(),"Legacy V1 save loads with optional exploration defaults")
+	player.position = Vector2(600,600)
+	player.hit_time = 0
+	player.facing = Vector2.RIGHT
+	player.dodge()
+	var dodge_hp = player.health
+	player.take_damage(12)
+	check(player.health==dodge_hp,"Dodge protects only during its early window")
+	var cooldown = player.dodge_cooldown
+	player.dodge()
+	check(player.dodge_cooldown==cooldown,"Repeated input cannot reset dodge cooldown")
+	for i in 18: await physics_frame
+	check(player.position.x>650 and player.dodge_time==0,"Dodge physically moves and ends")
+	player.hit_time = 0
+	player.take_damage(12)
+	check(player.health<dodge_hp,"Player becomes vulnerable after dodge")
+	player.position = Vector2(885,300)
+	player.dodge_cooldown = 0
+	player.dodge()
+	for i in 18: await physics_frame
+	check(player.position.x<915,"Dodge cannot pass through the river bank")
+	world.hud.open_inventory()
+	player.dodge_cooldown = 0
+	player.dodge()
+	check(player.dodge_time==0,"Inventory blocks dodge")
+	world.hud.inventory_panel.close()
+	var herb = get_nodes_in_group("world_interaction")[0]
+	player.position = herb.position+Vector2(0,30)
+	for i in 2: await physics_frame
+	world.interact_nearby()
+	check(world.rpg.inventory.get("river_herb",0)==1 and world.rpg.herbalism==1,"Contextual interaction harvests real item and practice")
+	herb.interact()
+	check(world.rpg.inventory.get("river_herb",0)==1 and not herb.available(),"Harvested plant cannot pay repeatedly")
+	var exploration_save = load("res://scripts/rpg_state.gd").new()
+	check(exploration_save.restore(world.rpg.snapshot()) and exploration_save.harvested.has(herb.resource_id),"Plant regrowth timer survives save restoration")
+	player.health = 30
+	check(world.use_item("river_herb")=="Vida recuperada" and player.health==45,"Gathered herb is a usable healing consumable")
+	world.rpg.harvested[herb.resource_id] = Time.get_unix_time_from_system()-1
+	herb.interact()
+	check(world.rpg.herbalism==2 and world.rpg.inventory.get("river_herb",0)==1,"Plant regrows and can be gathered again")
+	var herb_coins = world.coins
+	world.rpg.sell("river_herb")
+	check(world.coins==herb_coins+2,"Gathered resource participates in existing economy")
+	player.position = Vector2(600,600)
+	world.rpg.harvested[herb.resource_id] = 0
+	herb.interact()
+	check(world.rpg.herbalism==2,"Cannot harvest from outside interaction range")
+	var well = get_nodes_in_group("world_interaction")[3]
+	player.position = well.position+Vector2(35,0)
+	for i in 2: await physics_frame
+	var xp_before_echo = world.rpg.xp
+	world.interact_nearby()
+	check(world.rpg.discoveries.has("well_echo") and world.rpg.xp==xp_before_echo+15 and well.echo.playing,"Well discovery plays its echo and grants one reward")
+	well.interact()
+	check(world.rpg.xp==xp_before_echo+15,"Discovery reward cannot be farmed")
+	check(exploration_save.restore(world.rpg.snapshot()) and exploration_save.discoveries.has("well_echo") and exploration_save.herbalism==2,"Discovery and profession practice persist")
+	well.echo.stop()
+	current_scene.queue_free()
+	await process_frame
+	await process_frame
 	print("SLICE TEST COMPLETE: ",failures," failure(s)")
 	quit(1 if failures else 0)

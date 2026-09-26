@@ -182,6 +182,54 @@ func run():
 	well.interact()
 	check(world.rpg.xp==xp_before_echo+15,"Discovery reward cannot be farmed")
 	check(exploration_save.restore(world.rpg.snapshot()) and exploration_save.discoveries.has("well_echo") and exploration_save.herbalism==2,"Discovery and profession practice persist")
+	var roster=load("res://scripts/character_roster.gd").new()
+	roster.save_enabled=false
+	var first=roster.create_character("Arin")
+	var second=roster.create_character("Nora")
+	check(first!="" and second!="" and first!=second,"Character creation assigns separate stable IDs")
+	check(roster.create_character("a")=="" and roster.create_character("arin")=="","Invalid or duplicate names cannot create characters")
+	check(roster.select_character(first),"Valid character selection succeeds")
+	var first_state=roster.profiles[first].data.duplicate(true)
+	first_state.coins=99
+	roster.save_profile(first,first_state)
+	check(roster.profiles[second].data.coins==12 and roster.profiles[first].data.coins==99,"Characters do not share inventory or progression")
+	var roster_copy=load("res://scripts/character_roster.gd").new()
+	check(roster_copy.restore(roster.snapshot()) and roster_copy.active_id==first and roster_copy.profiles.size()==2,"Roster roundtrip keeps selection and individual saves")
+	var invalid=roster.snapshot()
+	invalid.profiles[first]["class"]="unsupported"
+	check(not roster_copy.restore(invalid) and roster_copy.profiles[first]["class"]=="guardian","Invalid roster cannot replace existing state")
+	var legacy_file=load("res://scripts/rpg_state.gd").new()
+	legacy_file.save_path="user://qa-legacy-migration.json"
+	legacy_file.coins=87
+	legacy_file.quest="complete"
+	legacy_file.add_item("iron_sword")
+	legacy_file.equip("iron_sword")
+	legacy_file.save_game()
+	var migration=load("res://scripts/character_roster.gd").new()
+	migration.save_path="user://qa-character-migration.json"
+	migration.legacy_save_path=legacy_file.save_path
+	DirAccess.remove_absolute(migration.save_path)
+	migration.ensure_loaded()
+	check(migration.profiles.has("legacy") and migration.profiles.legacy.data.coins==87 and migration.profiles.legacy.data.equipment.weapon=="iron_sword","Legacy save migrates with coins, gear and quest intact")
+	check(FileAccess.file_exists(legacy_file.save_path),"Original legacy save is retained as backup")
+	var migration_reload=load("res://scripts/character_roster.gd").new()
+	migration_reload.save_path=migration.save_path
+	migration_reload.ensure_loaded()
+	check(migration_reload.profiles.size()==1 and migration_reload.active_id=="legacy","Reload does not duplicate legacy migration")
+	DirAccess.remove_absolute(migration.save_path)
+	DirAccess.remove_absolute(legacy_file.save_path)
+	world.rpg.add_item("iron_armor")
+	world.use_item("iron_armor")
+	check(world.rpg.defense()==5 and player.visual.hero_sheet.ends_with("v2/hero.png"),"Iron armor changes defense and actual animation sheet")
+	world.use_item("leather_armor")
+	check(player.visual.hero_sheet.ends_with("valen_leather.png"),"Leather armor has a separate animated appearance")
+	world.hud.open_inventory()
+	world.hud.inventory_panel.mode="Personagem"
+	world.hud.inventory_panel.refresh()
+	world.hud.inventory_panel.character_sheet.remove_armor.pressed.emit()
+	check(world.rpg.equipment.armor=="" and world.rpg.defense()==0 and player.visual.hero_sheet.ends_with("valen_linen.png"),"Removing armor restores basic clothing without deleting the item")
+	world.hud.inventory_panel.close()
+	for instance in [roster,roster_copy,migration,migration_reload]: instance.free()
 	well.echo.stop()
 	current_scene.queue_free()
 	await process_frame

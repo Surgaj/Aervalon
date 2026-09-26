@@ -8,6 +8,7 @@ var message_panel: Panel
 var message_title: Label
 var message_body: Label
 var dodge_button: Button
+var power_button: Button
 var attack_button: Button
 var interact_button: Button
 var portrait_warning: Panel
@@ -52,6 +53,8 @@ func _ready():
 	attack_button.button_down.connect(func(): world.player.attack())
 	dodge_button = button("Esquiva",Vector2(86,86),Color(0.13,0.20,0.26))
 	dodge_button.button_down.connect(func(): world.player.dodge())
+	power_button = button("Poder",Vector2(86,86),Color(0.20,0.14,0.28))
+	power_button.button_down.connect(func(): world.player.class_power())
 	interact_button = button("Falar",Vector2(86,86),Color(0.11,0.18,0.17))
 	interact_button.button_down.connect(func(): world.interact_nearby())
 	message_panel = panel(Vector2.ZERO,Vector2(570,123))
@@ -117,6 +120,7 @@ func layout():
 	joystick.position = joy_center
 	attack_button.position = size-Vector2(145,155)
 	interact_button.position = size-Vector2(252,123)
+	power_button.position = size-Vector2(252,225)
 	dodge_button.position = size-Vector2(140,263)
 	message_panel.position = Vector2((size.x-570)*0.5,size.y-155)
 	interaction_hint.position = Vector2(size.x-380,size.y-195)
@@ -147,6 +151,8 @@ func refresh():
 	if world.nearest_object: interact_button.text = world.nearest_object.action_text()
 	dodge_button.text = "%.1f" % world.player.dodge_cooldown if world.player.dodge_cooldown>0 else "Esquiva"
 	dodge_button.modulate = Color(0.7,0.7,0.7) if world.player.dodge_cooldown>0 else Color.WHITE
+	power_button.text = "%.1f" % world.player.power_cooldown if world.player.power_cooldown>0 else str(world.rpg.class_data().power)
+	power_button.modulate = Color(0.7,0.7,0.7) if world.player.power_cooldown>0 else Color.WHITE
 	attack_button.modulate = Color(0.7,0.7,0.7) if world.player.attack_cooldown>0 else Color.WHITE
 	minimap.queue_redraw()
 func _input(event):

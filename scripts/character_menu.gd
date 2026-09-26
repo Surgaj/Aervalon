@@ -1,5 +1,6 @@
 extends PanelContainer
 const RACES = preload("res://scripts/races.gd").ALL
+const CLASSES = preload("res://scripts/classes.gd").ALL
 var list: VBoxContainer
 var portrait: TextureRect
 var description: Label
@@ -8,9 +9,11 @@ var create_button: Button
 var enter_button: Button
 var delete_button: Button
 var race_grid: GridContainer
+var class_grid: GridContainer
 var feedback: Label
 var selected := ""
 var race_id := "valen"
+var class_id := "guardian"
 var new_character := false
 var deleting := ""
 var deletion_name := ""
@@ -58,14 +61,31 @@ func _ready():
 	right.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	right.add_theme_constant_override("separation",6)
 	body.add_child(right)
+	var race_label=Label.new()
+	race_label.text="RAÇA"
+	race_label.modulate=Color("c2b58e")
+	right.add_child(race_label)
 	race_grid=GridContainer.new()
 	race_grid.columns=4
 	right.add_child(race_grid)
 	for id in RACES:
 		var race_button=make_button(RACES[id].name)
-		race_button.custom_minimum_size=Vector2(104,58)
+		race_button.custom_minimum_size=Vector2(104,52)
 		race_button.pressed.connect(func(): race_id=id; refresh())
 		race_grid.add_child(race_button)
+	var class_label=Label.new()
+	class_label.text="CLASSE"
+	class_label.modulate=Color("c2b58e")
+	right.add_child(class_label)
+	class_grid=GridContainer.new()
+	class_grid.columns=5
+	right.add_child(class_grid)
+	for key in CLASSES:
+		var class_button=make_button(CLASSES[key].name)
+		class_button.custom_minimum_size=Vector2(84,48)
+		class_button.add_theme_font_size_override("font_size",16)
+		class_button.pressed.connect(func(): class_id=key; refresh())
+		class_grid.add_child(class_button)
 	description=Label.new()
 	description.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
 	description.add_theme_font_size_override("font_size",18)
@@ -147,7 +167,7 @@ func refresh():
 		child.queue_free()
 	for id in Roster.profiles:
 		var p=Roster.profiles[id]
-		var b=make_button("%s\n%s • Nv. %d" % [p.name,RACES[p.race].name,p.data.level])
+		var b=make_button("%s\n%s • %s • Nv. %d" % [p.name,RACES[p.race].name,CLASSES[p.get("class","guardian")].name,p.data.level])
 		b.disabled=id==selected and not new_character
 		b.pressed.connect(func(): selected=id; new_character=false; feedback.text=""; refresh())
 		list.add_child(b)
@@ -155,12 +175,17 @@ func refresh():
 	if not new_character and Roster.profiles.has(selected):
 		r.restore(Roster.profiles[selected].data)
 		race_id=Roster.profiles[selected].race
+		class_id=Roster.profiles[selected].get("class","guardian")
 	r.race=race_id
+	r.class_id=class_id
 	portrait.texture=preload("res://scripts/actor_visual.gd").portrait_for(r)
 	var race=RACES[race_id]
+	var class_data=CLASSES[class_id]
 	for b in race_grid.get_children(): b.disabled=b.text==race.name
-	description.text="%s • Guardião\n%s • Origem: %s\n%s" % [race.name,race.faction,race.origin,race.description] if new_character else "%s\n%s • Guardião • Nível %d\n%s\nOrigem: %s\n\nAtaque %d   Defesa %d\n%d moedas" % [Roster.profiles.get(selected,{}).get("name","Viajante"),race.name,r.level,race.faction,race.origin,r.attack(),r.defense(),r.coins]
+	for b in class_grid.get_children(): b.disabled=b.text==class_data.name
+	description.text=("%s • %s\n%s • Origem: %s\n%s\n\nArmas: %s\nCaminhos: %s\nPoder: %s" % [race.name,class_data.name,race.faction,race.origin,race.description,class_data.weapons,class_data.specializations,class_data.power]) if new_character else ("%s\n%s • %s • Nível %d\n%s\nOrigem: %s\n\nAtaque %d   Defesa %d   Vida %d\nPoder: %s\n%d moedas" % [Roster.profiles.get(selected,{}).get("name","Viajante"),race.name,class_data.name,r.level,race.faction,race.origin,r.attack(),r.defense(),r.max_health(),class_data.power,r.coins])
 	race_grid.visible=new_character
+	class_grid.visible=new_character
 	name_input.visible=new_character
 	create_button.visible=new_character
 	enter_button.visible=not new_character
@@ -168,9 +193,9 @@ func refresh():
 	enter_button.disabled=not Roster.profiles.has(selected) or Roster.blocked
 	delete_button.disabled=enter_button.disabled
 	create_button.disabled=Roster.profiles.size()>=Roster.MAX_CHARACTERS or Roster.blocked
-	feedback.text="Todas as raças visitam Eryndor nesta versão. Regiões natais e outras classes chegarão depois. Até 8 personagens." if not Roster.blocked else "Não foi possível ler o save. Seus dados foram preservados; recarregue para tentar novamente."
+	feedback.text="Raça e classe ficam ligadas ao personagem. As 10 classes já usam atributos, armas iniciais e poder próprio; especializações e arte completa de armas entram nas próximas etapas. Até 8 personagens." if not Roster.blocked else "Não foi possível ler o save. Seus dados foram preservados; recarregue para tentar novamente."
 func create_character():
-	var id=Roster.create_character(name_input.text,race_id)
+	var id=Roster.create_character(name_input.text,race_id,class_id)
 	if id=="":
 		feedback.text="Use um nome único de 2–20 caracteres. Limite: 8 personagens. Verifique se o navegador permite salvar."
 		return

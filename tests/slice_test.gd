@@ -271,6 +271,16 @@ func run():
 		for i in 15: await physics_frame
 		player.set_touch_direction(Vector2.ZERO)
 		check(player.position.x>620,"Race uses real movement controller: "+race_id)
+	var class_roster=load("res://scripts/character_roster.gd").new()
+	class_roster.save_enabled=false
+	for class_id in load("res://scripts/classes.gd").ALL:
+		var class_profile=class_roster.create_character("Classe "+class_id,"valen",class_id)
+		check(class_profile!="" and class_roster.profiles[class_profile].get("class","")==class_id,"Create persistent class identity: "+class_id)
+		var class_state=load("res://scripts/rpg_state.gd").new()
+		check(class_state.restore(class_roster.profiles[class_profile].data),"Restore class starter snapshot: "+class_id)
+		class_state.class_id=class_id
+		check(class_state.equipment.weapon==load("res://scripts/classes.gd").ALL[class_id].starter and class_state.can_equip(class_state.equipment.weapon),"Class starts with compatible weapon: "+class_id)
+	check(class_roster.profiles.size()==10,"All ten classes coexist in isolated profiles")
 	var restored_races=load("res://scripts/character_roster.gd").new()
 	restored_races.save_enabled=false
 	check(restored_races.restore(race_roster.snapshot()) and restored_races.profiles.size()==7,"All seven races survive roster restore")
@@ -295,7 +305,7 @@ func run():
 	empty_reload.ensure_loaded()
 	check(empty_reload.profiles.is_empty() and empty_reload.active_id=="","Reload does not resurrect the last deleted character")
 	DirAccess.remove_absolute(race_roster.save_path)
-	for instance in [race_roster,restored_races,empty_reload]: instance.free()
+	for instance in [race_roster,class_roster,restored_races,empty_reload]: instance.free()
 	well.echo.stop()
 	well.echo.stream=null
 	await create_timer(0.1).timeout # Let the audio mixer release its playback before teardown.

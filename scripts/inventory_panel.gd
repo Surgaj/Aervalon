@@ -127,7 +127,7 @@ func close():
 func refresh():
 	heading.text = "Borin • Ferraria" if shop=="borin" else ("Nilo • Mercado" if shop=="merchant" else "Sua mochila")
 	var r = world.rpg
-	stats.text = "%d moedas   •   Nv. %d   •   Ataque %d   •   Defesa %d   •   Vida %d/%d" % [r.coins,r.level,r.attack(),r.defense(),world.player.health,world.player.max_health]
+	stats.text = "%s   •   %d moedas   •   Nv. %d   •   Ataque %d   •   Defesa %d   •   Vida %d/%d" % [r.class_data().name,r.coins,r.level,r.attack(),r.defense(),world.player.health,world.player.max_health]
 	for button in tabs.get_children():
 		button.visible = button.text in ["Mochila","Personagem"] or shop!=""
 		button.disabled = button.text==mode

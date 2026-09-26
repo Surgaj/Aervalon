@@ -1,9 +1,19 @@
 extends RefCounted
+const CLASSES = preload("res://scripts/classes.gd").ALL
 # IDs are stable save keys. Definitions can grow without changing the save schema.
 const ITEMS = {
 	"river_herb": {"name":"Erva de Orvalho", "type":"Consumíveis", "heal":15, "price":0, "value":2, "icon":"herb", "description":"Colhida no vale. Recupera 15 de vida."},
-	"rusty_sword": {"name":"Espada Enferrujada", "type":"Equipamentos", "slot":"weapon", "attack":5, "price":8, "value":3, "icon":"sword", "description":"Uma lâmina gasta. Ataque +5."},
-	"iron_sword": {"name":"Espada de Ferro", "type":"Equipamentos", "slot":"weapon", "attack":18, "price":38, "value":15, "icon":"sword", "description":"Forjada por Borin. Ataque +18."},
+	"rusty_sword": {"name":"Espada Enferrujada", "type":"Equipamentos", "slot":"weapon", "family":"blade", "attack":5, "price":8, "value":3, "icon":"sword", "description":"Uma lâmina gasta. Ataque +5."},
+	"iron_sword": {"name":"Espada de Ferro", "type":"Equipamentos", "slot":"weapon", "family":"blade", "attack":18, "price":38, "value":15, "icon":"sword", "description":"Forjada por Borin. Ataque +18."},
+	"shadow_daggers": {"name":"Lâminas Gêmeas", "type":"Equipamentos", "slot":"weapon", "family":"dagger", "attack":4, "price":0, "value":1, "icon":"sword", "description":"Duas lâminas leves de iniciado. Feitas para golpes rápidos."},
+	"tracker_bow": {"name":"Arco de Rastreador", "type":"Equipamentos", "slot":"weapon", "family":"bow", "attack":4, "price":0, "value":1, "icon":"sword", "description":"Arco simples de viagem, próprio para manter distância."},
+	"arcanist_staff": {"name":"Báculo de Cinza", "type":"Equipamentos", "slot":"weapon", "family":"staff", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Canaliza a primeira disciplina de um Arcanista."},
+	"luminar_mace": {"name":"Maça do Alvorecer", "type":"Equipamentos", "slot":"weapon", "family":"mace", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Arma de peregrino usada pelos Luminares."},
+	"bound_spear": {"name":"Lança Vinculada", "type":"Equipamentos", "slot":"weapon", "family":"spear", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Lança ritual marcada para um vínculo espiritual."},
+	"veil_scythe": {"name":"Foice Velária", "type":"Equipamentos", "slot":"weapon", "family":"scythe", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Foice curta usada para conduzir ecos vitais."},
+	"artificer_pistol": {"name":"Pistola de Oficina", "type":"Equipamentos", "slot":"weapon", "family":"firearm", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Mecanismo robusto de um Artífice iniciante."},
+	"storm_spear": {"name":"Lança da Tempestade", "type":"Equipamentos", "slot":"weapon", "family":"spear", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Haste condutora usada pelos Tempestários."},
+	"echo_blade": {"name":"Lâmina de Eco", "type":"Equipamentos", "slot":"weapon", "family":"blade", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Lâmina equilibrada para técnicas de ruptura e memória."},
 	"iron_armor": {"name":"Armadura de Ferro", "type":"Equipamentos", "slot":"armor", "defense":5, "price":55, "value":22, "icon":"armor", "description":"Placas e capa de viagem. Defesa +5."},
 	"leather_armor": {"name":"Armadura Simples", "type":"Equipamentos", "slot":"armor", "defense":3, "price":24, "value":9, "icon":"armor", "description":"Couro reforçado. Defesa +3."},
 	"potion": {"name":"Poção de Vida", "type":"Consumíveis", "heal":45, "price":8, "value":3, "icon":"potion", "description":"Recupera 45 pontos de vida."},
@@ -26,12 +36,28 @@ var harvested := {}
 var discoveries := {}
 var profile_id := ""
 var race := "valen" # Identity belongs to the roster, not the gameplay snapshot.
+var class_id := "guardian" # Class identity also belongs to the roster.
 var save_enabled := true
 var save_path := "user://eryndor_rpg_v1.json"
 func xp_needed() -> int: return 60 + (level-1)*35
-func attack() -> int: return 20+(level-1)*2+int(ITEMS.get(equipment.weapon,{}).get("attack",0))
-func defense() -> int: return int(ITEMS.get(equipment.armor,{}).get("defense",0))
-func max_health() -> int: return 100+(level-1)*8
+func class_data() -> Dictionary: return CLASSES.get(class_id,CLASSES.guardian)
+func attack() -> int: return 20+(level-1)*2+int(ITEMS.get(equipment.weapon,{}).get("attack",0))+int(class_data().attack_bonus)
+func defense() -> int: return int(ITEMS.get(equipment.armor,{}).get("defense",0))+int(class_data().defense_bonus)
+func max_health() -> int: return maxi(60,100+(level-1)*8+int(class_data().health_bonus))
+func move_speed() -> float: return float(class_data().speed)
+func attack_cooldown_value() -> float: return float(class_data().attack_cooldown)
+func attack_range() -> float: return float(class_data().attack_range)
+func class_power_cooldown() -> float: return float(class_data().power_cooldown)
+func configure_new_character(id: String):
+	class_id = id if CLASSES.has(id) else "guardian"
+	var starter = str(class_data().starter)
+	inventory = {"potion":2}
+	if ITEMS.has(starter): inventory[starter]=1
+	equipment = {"weapon":starter if ITEMS.has(starter) else "", "armor":""}
+func can_equip(id: String) -> bool:
+	if not ITEMS.has(id) or not ITEMS[id].has("slot"): return false
+	if ITEMS[id].slot!="weapon": return true
+	return str(ITEMS[id].get("family","")) in class_data().families
 func add_item(id: String, count := 1):
 	if ITEMS.has(id) and count>0: inventory[id] = int(inventory.get(id,0))+count
 func add_xp(amount: int) -> bool:
@@ -44,6 +70,7 @@ func add_xp(amount: int) -> bool:
 	return leveled
 func buy(id: String, shop: String) -> String:
 	if not id in SHOPS.get(shop,[]): return "Item indisponível"
+	if ITEMS[id].get("slot","")=="weapon" and not can_equip(id): return "Sua classe não usa este tipo de arma"
 	var cost = ITEMS[id].price
 	if coins<cost: return "Moedas insuficientes"
 	coins -= cost
@@ -60,7 +87,7 @@ func remove_item(id: String):
 	inventory[id] = int(inventory.get(id,0))-1
 	if inventory[id]<=0: inventory.erase(id)
 func equip(id: String) -> bool:
-	if not ITEMS.has(id) or int(inventory.get(id,0))<=0 or not ITEMS[id].has("slot"): return false
+	if not ITEMS.has(id) or int(inventory.get(id,0))<=0 or not ITEMS[id].has("slot") or not can_equip(id): return false
 	equipment[ITEMS[id].slot] = id
 	return true
 func snapshot() -> Dictionary:

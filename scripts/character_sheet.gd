@@ -39,6 +39,7 @@ func _ready():
 func refresh():
 	var r=world.rpg
 	portrait.texture=preload("res://scripts/actor_visual.gd").portrait_for(r)
-	identity.text="%s\n%s • Guardião" % [Roster.profiles.get(r.profile_id,{}).get("name","Viajante"),preload("res://scripts/races.gd").ALL[r.race].name]
-	slots.text="Arma: %s\nArmadura: %s" % [r.ITEMS.get(r.equipment.weapon,{"name":"Nenhuma"}).name,r.ITEMS.get(r.equipment.armor,{"name":"Roupa de linho"}).name]
+	var class_data=preload("res://scripts/classes.gd").ALL[r.class_id]
+	identity.text="%s\n%s • %s" % [Roster.profiles.get(r.profile_id,{}).get("name","Viajante"),preload("res://scripts/races.gd").ALL[r.race].name,class_data.name]
+	slots.text="Arma: %s\nArmadura: %s\n\nArmas da classe: %s\nPoder: %s" % [r.ITEMS.get(r.equipment.weapon,{"name":"Nenhuma"}).name,r.ITEMS.get(r.equipment.armor,{"name":"Roupa de linho"}).name,class_data.weapons,class_data.power]
 	remove_armor.disabled=r.equipment.armor==""

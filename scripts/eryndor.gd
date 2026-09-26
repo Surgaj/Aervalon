@@ -31,6 +31,7 @@ func _ready():
 			rpg.restore(Roster.profiles[Roster.active_id].data)
 			rpg.profile_id = Roster.active_id
 			rpg.race = Roster.profiles[Roster.active_id].race
+			rpg.class_id = Roster.profiles[Roster.active_id].get("class","guardian")
 	quest_started = rpg.quest != "available"
 	quest_complete = rpg.quest == "complete"
 	quest_kills = rpg.kills
@@ -45,8 +46,14 @@ func _ready():
 		var key = InputEventKey.new()
 		key.physical_keycode = KEY_SHIFT
 		InputMap.action_add_event("dodge",key)
+	if not InputMap.has_action("power"):
+		InputMap.add_action("power")
+		var power_key = InputEventKey.new()
+		power_key.physical_keycode = KEY_Q
+		InputMap.action_add_event("power",power_key)
 	player = PLAYER.instantiate()
 	player.position = Vector2(610,590)
+	player.speed = rpg.move_speed()
 	$YSortWorld.add_child(player)
 	player.max_health = rpg.max_health()
 	player.health = player.max_health
@@ -121,7 +128,7 @@ func _process(delta):
 		qa_clock += delta
 		if qa_clock>0.1:
 			qa_clock = 0
-			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"profile":rpg.profile_id,"scene":"eryndor","world_loaded":true,"race":rpg.race,"visual_race":player.visual.hero_race,"menu":false,"character_name":Roster.profiles.get(rpg.profile_id,{}).get("name",""),"buttons":hud.inventory_panel.qa_buttons()}
+			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"profile":rpg.profile_id,"scene":"eryndor","world_loaded":true,"race":rpg.race,"class":rpg.class_id,"visual_race":player.visual.hero_race,"power_cooldown":player.power_cooldown,"menu":false,"character_name":Roster.profiles.get(rpg.profile_id,{}).get("name",""),"buttons":hud.inventory_panel.qa_buttons()}
 			JavaScriptBridge.eval("document.querySelector('canvas').dataset.aervalon="+JSON.stringify(JSON.stringify(state)), true)
 func interact_nearby():
 	if player.death_time>0 or modal_open: return
@@ -193,11 +200,132 @@ func persist() -> bool:
 	var saved = rpg.save_game()
 	if not saved: show_message("Não foi possível salvar", "O navegador bloqueou o armazenamento. Mantenha esta aba aberta para preservar esta sessão.")
 	return saved
+func use_class_power() -> bool:
+	if player.death_time>0 or modal_open: return false
+	var data=rpg.class_data()
+	match rpg.class_id:
+		"guardian":
+			player.guard_time=2.5
+			power_ring(player.global_position,82,Color("e6c56d"))
+			show_message(data.power,"Por alguns segundos, o próximo dano recebido é fortemente reduzido.")
+		"shadow":
+			power_ring(player.global_position+player.facing*48,92,Color("b597d6"))
+			hit_forward(112,0.15,0.62,99)
+			hit_forward(112,0.15,0.62,99)
+			show_message(data.power,"Duas passagens rápidas cortam inimigos à frente.")
+		"tracker":
+			var target=nearest_forward_enemy(245,0.62)
+			var end=player.global_position+player.facing*230
+			if target:
+				end=target.global_position
+				if clear_shot(target): target.take_damage(roundi(rpg.attack()*1.65),player.facing)
+			power_line(player.global_position,end,Color("d9c58a"))
+			show_message(data.power,"Um disparo preciso atravessa a distância até o alvo.")
+		"arcanist":
+			var center=player.global_position+player.facing*120
+			power_ring(center,105,Color("8fb8ff"))
+			hit_area(center,112,1.25)
+			show_message(data.power,"Energia arcana explode à frente e atinge quem estiver no círculo.")
+		"luminar":
+			var healed=maxi(20,roundi(player.max_health*0.35))
+			player.health=mini(player.max_health,player.health+healed)
+			player.health_changed.emit()
+			power_ring(player.global_position,94,Color("ffe3a3"))
+			show_message(data.power,"A luz restaura %d pontos de vida." % healed)
+		"bound":
+			var target=nearest_forward_enemy(155,-0.25)
+			var healed=18
+			if target and clear_shot(target):
+				var amount=roundi(rpg.attack()*1.15)
+				target.take_damage(amount,player.global_position.direction_to(target.global_position))
+				healed+=roundi(amount*0.25)
+			player.health=mini(player.max_health,player.health+healed)
+			player.health_changed.emit()
+			power_ring(player.global_position,105,Color("9fd199"))
+			show_message(data.power,"O vínculo fere o alvo próximo e devolve parte da força ao corpo.")
+		"veil":
+			var target=nearest_forward_enemy(175,-0.7)
+			if target and clear_shot(target):
+				var amount=roundi(rpg.attack()*1.05)
+				target.take_damage(amount,player.global_position.direction_to(target.global_position))
+				player.health=mini(player.max_health,player.health+roundi(amount*0.5))
+				player.health_changed.emit()
+				power_line(target.global_position,player.global_position,Color("bd84b8"))
+			else: power_ring(player.global_position,76,Color("bd84b8"))
+			show_message(data.power,"Um eco vital é puxado do inimigo mais próximo.")
+		"artificer":
+			var center=player.global_position+player.facing*145
+			power_ring(center,100,Color("e7a56c"))
+			hit_area(center,100,1.35)
+			show_message(data.power,"Uma carga de oficina detona no ponto à frente.")
+		"storm":
+			power_ring(player.global_position,135,Color("91d7e5"))
+			hit_area(player.global_position,135,1.0)
+			show_message(data.power,"A descarga se espalha ao redor do Tempestário.")
+		"echo":
+			player.attack_cooldown=0
+			player.dodge_cooldown=0
+			player.hit_time=0
+			power_ring(player.global_position,112,Color("a9b7ff"))
+			show_message(data.power,"O instante se rompe: ataque e esquiva ficam disponíveis novamente.")
+	return true
+func clear_shot(enemy) -> bool:
+	var query=PhysicsRayQueryParameters2D.create(player.global_position,enemy.global_position,1,[player.get_rid()])
+	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
+func nearest_forward_enemy(max_range: float, dot_min: float):
+	var result=null
+	var best=max_range
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if enemy.health<=0: continue
+		var offset: Vector2=enemy.global_position-player.global_position
+		var distance=offset.length()
+		if distance<=best and (distance<24 or player.facing.dot(offset.normalized())>=dot_min):
+			best=distance
+			result=enemy
+	return result
+func hit_forward(max_range: float, dot_min: float, multiplier: float, max_targets: int):
+	var hits=0
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if enemy.health<=0: continue
+		var offset: Vector2=enemy.global_position-player.global_position
+		if offset.length()<=max_range and (offset.length()<24 or player.facing.dot(offset.normalized())>=dot_min) and clear_shot(enemy):
+			enemy.take_damage(maxi(1,roundi(rpg.attack()*multiplier)),player.facing)
+			hits+=1
+			if hits>=max_targets: break
+func hit_area(center: Vector2, radius: float, multiplier: float):
+	for enemy in get_tree().get_nodes_in_group("enemy"):
+		if enemy.health>0 and enemy.global_position.distance_to(center)<=radius:
+			enemy.take_damage(maxi(1,roundi(rpg.attack()*multiplier)),center.direction_to(enemy.global_position))
+func power_ring(point: Vector2, radius: float, tint: Color):
+	var ring=Line2D.new()
+	ring.width=4
+	ring.default_color=tint
+	ring.position=point
+	ring.z_index=9
+	for i in 33:
+		ring.add_point(Vector2.from_angle(float(i)/32.0*TAU)*radius)
+	add_child(ring)
+	ring.scale=Vector2.ONE*0.65
+	var tween=create_tween().set_parallel(true)
+	tween.tween_property(ring,"scale",Vector2.ONE*1.18,0.35)
+	tween.tween_property(ring,"modulate:a",0.0,0.35)
+	tween.chain().tween_callback(ring.queue_free)
+func power_line(from: Vector2, to: Vector2, tint: Color):
+	var line=Line2D.new()
+	line.width=5
+	line.default_color=tint
+	line.z_index=9
+	line.add_point(from)
+	line.add_point(to)
+	add_child(line)
+	var tween=create_tween()
+	tween.tween_property(line,"modulate:a",0.0,0.24)
+	tween.tween_callback(line.queue_free)
 func use_item(id: String) -> String:
 	if not rpg.inventory.has(id): return "Item indisponível"
 	var item = rpg.ITEMS[id]
 	if item.has("slot"):
-		rpg.equip(id)
+		if not rpg.equip(id): return "Sua classe não usa este tipo de arma"
 		player.visual.apply_equipment(rpg)
 		persist()
 		return "Equipado • Ataque %d • Defesa %d" % [rpg.attack(),rpg.defense()]

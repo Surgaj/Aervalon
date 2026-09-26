@@ -23,7 +23,7 @@ func _ready():
 func layout():
 	if not is_instance_valid(menu): return
 	var available=get_viewport_rect().size-Vector2(48,40)
-	var dimensions=Vector2(1120,520).max(menu.get_combined_minimum_size())
+	var dimensions=Vector2(1160,570).max(menu.get_combined_minimum_size())
 	var factor=minf(1.35,minf(available.x/dimensions.x,available.y/dimensions.y))
 	menu.scale=Vector2.ONE*factor
 	menu.size=dimensions
@@ -37,7 +37,7 @@ func _process(delta):
 	var profile=Roster.profiles.get(Roster.active_id,{})
 	if not profile.is_empty(): r.restore(profile.data)
 	var profiles={}
-	for id in Roster.profiles: profiles[id]={"name":Roster.profiles[id].name,"race":Roster.profiles[id].race}
+	for id in Roster.profiles: profiles[id]={"name":Roster.profiles[id].name,"race":Roster.profiles[id].race,"class":Roster.profiles[id].get("class","guardian")}
 	var viewport=get_viewport_rect().size
-	var state={"scene":"title","world_loaded":false,"menu":true,"modal":true,"viewport":[viewport.x,viewport.y],"buttons":menu.qa_buttons(),"profiles":profiles,"selected_race":menu.race_id,"profile":Roster.active_id,"character_name":profile.get("name",""),"coins":r.coins,"equipment":r.equipment,"inventory":r.inventory,"level":r.level,"xp":r.xp,"quest_started":r.quest!="available","complete":r.quest=="complete","herbalism":r.herbalism,"discoveries":r.discoveries}
+	var state={"scene":"title","world_loaded":false,"menu":true,"modal":true,"viewport":[viewport.x,viewport.y],"buttons":menu.qa_buttons(),"profiles":profiles,"selected_race":menu.race_id,"selected_class":menu.class_id,"profile":Roster.active_id,"character_name":profile.get("name",""),"coins":r.coins,"equipment":r.equipment,"inventory":r.inventory,"level":r.level,"xp":r.xp,"quest_started":r.quest!="available","complete":r.quest=="complete","herbalism":r.herbalism,"discoveries":r.discoveries}
 	JavaScriptBridge.eval("document.querySelector('canvas').dataset.aervalon="+JSON.stringify(JSON.stringify(state)),true)

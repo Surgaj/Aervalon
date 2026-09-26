@@ -2,6 +2,7 @@ extends Node
 # Separate storage leaves the original single-character save untouched as a backup.
 const RPG = preload("res://scripts/rpg_state.gd")
 const RACES = preload("res://scripts/races.gd").ALL
+const CLASSES = preload("res://scripts/classes.gd").ALL
 const MAX_CHARACTERS = 8
 const KEY = "aervalon.characters.v1"
 var save_path := "user://aervalon_characters_v1.json"
@@ -21,10 +22,11 @@ func restore(data) -> bool:
 	for id in data.profiles:
 		var p = data.profiles[id]
 		if not id is String or not p is Dictionary: return false
-		if not RACES.has(p.get("race","")) or p.get("class","")!="guardian": return false
+		var class_id = str(p.get("class","guardian"))
+		if not RACES.has(p.get("race","")) or not CLASSES.has(class_id): return false
 		var r = RPG.new()
 		if not r.restore(p.get("data")): return false
-		validated[id] = {"name":str(p.get("name","Viajante")).left(20),"race":p.race,"class":"guardian","legacy":bool(p.get("legacy",false)),"data":r.snapshot()}
+		validated[id] = {"name":str(p.get("name","Viajante")).left(20),"race":p.race,"class":class_id,"legacy":bool(p.get("legacy",false)),"data":r.snapshot()}
 	profiles = validated
 	active_id = str(data.get("active",""))
 	if not profiles.has(active_id): active_id = str(profiles.keys()[0]) if not profiles.is_empty() else ""
@@ -60,16 +62,17 @@ func flush() -> bool:
 	file.store_string(text)
 	file.close()
 	return DirAccess.rename_absolute(save_path+".tmp",save_path)==OK
-func create_character(character_name: String, race_id := "valen") -> String:
+func create_character(character_name: String, race_id := "valen", class_id := "guardian") -> String:
 	var clean = character_name.strip_edges()
-	if blocked or profiles.size()>=MAX_CHARACTERS or clean.length()<2 or clean.length()>20 or not RACES.has(race_id): return ""
+	if blocked or profiles.size()>=MAX_CHARACTERS or clean.length()<2 or clean.length()>20 or not RACES.has(race_id) or not CLASSES.has(class_id): return ""
 	for c in clean:
 		if c.unicode_at(0)<32: return ""
 	for p in profiles.values():
 		if str(p.name).nocasecmp_to(clean)==0: return ""
 	var id = "c_%d_%d" % [Time.get_ticks_usec(),randi()]
 	var r = RPG.new()
-	profiles[id] = {"name":clean,"race":race_id,"class":"guardian","legacy":false,"data":r.snapshot()}
+	r.configure_new_character(class_id)
+	profiles[id] = {"name":clean,"race":race_id,"class":class_id,"legacy":false,"data":r.snapshot()}
 	if not flush():
 		profiles.erase(id)
 		return ""

@@ -11,6 +11,8 @@ var hit_time := 0.0
 var death_time := 0.0
 var dodge_time := 0.0
 var dodge_cooldown := 0.0
+var power_cooldown := 0.0
+var guard_time := 0.0
 var dodge_direction := Vector2.DOWN
 var strike_done := false
 var spawn := Vector2(610,590)
@@ -19,6 +21,8 @@ func _ready():
 	visual.setup("hero")
 func _physics_process(delta):
 	dodge_cooldown = maxf(0,dodge_cooldown-delta)
+	power_cooldown = maxf(0,power_cooldown-delta)
+	guard_time = maxf(0,guard_time-delta)
 	attack_cooldown = maxf(0,attack_cooldown-delta)
 	hit_time = maxf(0,hit_time-delta)
 	if death_time > 0:
@@ -43,6 +47,7 @@ func _physics_process(delta):
 	var input_dir = Input.get_vector("move_left","move_right","move_up","move_down")
 	if touch_dir.length()>0.05: input_dir = touch_dir
 	if Input.is_action_just_pressed("dodge"): dodge()
+	if Input.is_action_just_pressed("power"): class_power()
 	if dodge_time>0:
 		dodge_time = maxf(0,dodge_time-delta)
 		velocity = dodge_direction*370.0
@@ -69,9 +74,13 @@ func set_touch_direction(dir: Vector2):
 	touch_dir = dir.limit_length(1.0)
 func attack():
 	if attack_cooldown>0 or dodge_time>0 or death_time>0 or get_tree().current_scene.modal_open: return
-	attack_cooldown = 0.55
-	attack_time = 0.4
+	attack_cooldown = get_tree().current_scene.rpg.attack_cooldown_value()
+	attack_time = minf(0.4,attack_cooldown*0.78)
 	strike_done = false
+func class_power():
+	if power_cooldown>0 or dodge_time>0 or death_time>0 or get_tree().current_scene.modal_open: return
+	if get_tree().current_scene.use_class_power():
+		power_cooldown=get_tree().current_scene.rpg.class_power_cooldown()
 func dodge():
 	if dodge_cooldown>0 or death_time>0 or get_tree().current_scene.modal_open: return
 	var direction = touch_dir if touch_dir.length()>0.05 else Input.get_vector("move_left","move_right","move_up","move_down")
@@ -85,13 +94,14 @@ func _strike():
 	get_tree().current_scene.slash(global_position,facing)
 	for enemy in get_tree().get_nodes_in_group("enemy"):
 		var offset: Vector2 = enemy.global_position-global_position
-		if enemy.health>0 and offset.length()<86 and (offset.length()<26 or facing.dot(offset.normalized())>0.25):
+		if enemy.health>0 and offset.length()<get_tree().current_scene.rpg.attack_range() and (offset.length()<26 or facing.dot(offset.normalized())>0.25):
 			# World geometry must not allow sword hits through walls.
 			var query = PhysicsRayQueryParameters2D.create(global_position,enemy.global_position,1,[get_rid()])
 			if get_world_2d().direct_space_state.intersect_ray(query).is_empty(): enemy.take_damage(get_tree().current_scene.rpg.attack(),facing)
 func take_damage(amount: int):
 	if death_time>0 or dodge_time>0.08 or hit_time>0 or get_tree().current_scene.modal_open: return
 	amount = maxi(1,amount-get_tree().current_scene.rpg.defense())
+	if guard_time>0: amount=maxi(1,ceili(amount*0.4))
 	health = maxi(0,health-amount)
 	hit_time = 0.3
 	visual.flash()

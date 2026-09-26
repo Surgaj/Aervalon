@@ -252,6 +252,10 @@ func run():
 	check(character_rect.position.y>=0 and character_rect.end.y<=world.hud.root.size.y,"Character sheet fits viewport vertically")
 	world.hud.inventory_panel.character_sheet.remove_armor.pressed.emit()
 	check(world.rpg.equipment.armor=="" and world.rpg.defense()==0 and player.visual.hero_sheet.ends_with("valen_linen.png"),"Removing armor restores basic clothing without deleting the item")
+	root.size=Vector2i(844,390)
+	for i in 5: await process_frame
+	character_rect=world.hud.inventory_panel.get_global_rect()
+	check(character_rect.position.y>=0 and character_rect.end.y<=world.hud.root.size.y,"Mobile equipment panel relayout keeps header and footer on screen")
 	world.hud.inventory_panel.close()
 	for instance in [roster,roster_copy,migration,migration_reload]: instance.free()
 	well.echo.stop()

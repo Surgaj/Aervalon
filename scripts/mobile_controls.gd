@@ -76,6 +76,8 @@ func _ready():
 	character_menu = PanelContainer.new()
 	character_menu.set_script(preload("res://scripts/character_menu.gd"))
 	root.add_child(character_menu)
+	inventory_panel.minimum_size_changed.connect(func(): layout.call_deferred())
+	character_menu.minimum_size_changed.connect(func(): layout.call_deferred())
 	get_viewport().size_changed.connect(layout)
 	layout()
 func box(color: Color, radius: int) -> StyleBoxFlat:

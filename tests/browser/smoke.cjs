@@ -198,6 +198,8 @@ const assert = require('node:assert/strict');
     await page.screenshot({path:'qa/leather-sheet-mobile.png'});
     await pressUI('Retirar armadura');
     assert.equal((await readState()).equipment.armor,'','Character sheet removes armor');
+    await pressUI('Fechar');
+    assert.equal((await readState()).modal,false,'Equipment sheet close button stays reachable on mobile');
     const originalSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('aervalon.eryndor.v1')));
     assert.deepEqual(originalSave,legacy,'Original save remains untouched as backup');
     assert.deepEqual(errors, [], 'No Godot or JavaScript runtime errors');

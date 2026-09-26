@@ -13,12 +13,15 @@ func _ready():
 	portrait.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	add_child(portrait)
+	var actions_column=VBoxContainer.new()
+	actions_column.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	add_child(actions_column)
 	var scroll=ScrollContainer.new()
 	scroll.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL
 	scroll.custom_minimum_size=Vector2(280,0)
 	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
-	add_child(scroll)
+	actions_column.add_child(scroll)
 	var right=VBoxContainer.new()
 	right.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	scroll.add_child(right)
@@ -35,13 +38,17 @@ func _ready():
 		world.player.visual.apply_equipment(world.rpg)
 		world.persist()
 		world.hud.inventory_panel.refresh())
-	right.add_child(remove_armor)
+	var actions=HBoxContainer.new()
+	actions_column.add_child(actions)
+	remove_armor.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	actions.add_child(remove_armor)
 	var characters=world.hud.inventory_panel.make_button("Personagens")
 	characters.pressed.connect(func():
 		if world.persist():
 			Roster.in_game=false
 			get_tree().change_scene_to_file("res://scenes/ui/title_screen.tscn"))
-	right.add_child(characters)
+	characters.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	actions.add_child(characters)
 func refresh():
 	var r=world.rpg
 	portrait.texture=preload("res://scripts/actor_visual.gd").portrait_for(r)

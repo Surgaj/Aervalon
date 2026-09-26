@@ -193,7 +193,7 @@ func refresh():
 	enter_button.disabled=not Roster.profiles.has(selected) or Roster.blocked
 	delete_button.disabled=enter_button.disabled
 	create_button.disabled=Roster.profiles.size()>=Roster.MAX_CHARACTERS or Roster.blocked
-	feedback.text="Raça e classe ficam ligadas ao personagem. As 10 classes já usam atributos, armas iniciais e poder próprio; especializações e arte completa de armas entram nas próximas etapas. Até 8 personagens." if not Roster.blocked else "Não foi possível ler o save. Seus dados foram preservados; recarregue para tentar novamente."
+	feedback.text="Escolha sua origem e seu caminho. Até 8 personagens, cada um com sua própria jornada." if not Roster.blocked else "Não foi possível ler o save. Seus dados foram preservados; recarregue para tentar novamente."
 func create_character():
 	var id=Roster.create_character(name_input.text,race_id,class_id)
 	if id=="":
@@ -213,7 +213,7 @@ func request_delete():
 	if not Roster.profiles.has(selected): return
 	deleting=selected
 	deletion_name=Roster.profiles[selected].name
-	confirm_label.text="Excluir %s?\n\nTodo o progresso deste personagem será removido deste navegador. Os demais personagens serão mantidos.\n\nEsta ação não pode ser desfeita pelo jogo." % deletion_name
+	confirm_label.text="Excluir %s?\n\nTodo o progresso deste personagem será removido da lista de personagens. Os demais personagens serão mantidos.\n\nEsta ação não pode ser desfeita pelo jogo." % deletion_name
 	$DeleteShield.show()
 func confirm_delete():
 	if not Roster.delete_character(deleting,deletion_name):

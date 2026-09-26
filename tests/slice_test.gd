@@ -311,7 +311,7 @@ func run():
 	var iria_found=false
 	var bento_found=false
 	var roaming_hens=0
-	for citizen in get_tree().get_nodes_in_group("npc"):
+	for citizen in get_nodes_in_group("npc"):
 		if citizen.npc_name=="Iria, agricultora": iria_found=true
 		if citizen.npc_name=="Bento, carreteiro": bento_found=true
 		if citizen.appearance=="hen" and citizen.global_position.x>1900: roaming_hens+=1

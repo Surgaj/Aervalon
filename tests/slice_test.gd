@@ -97,7 +97,7 @@ func run():
 	player.hit_time=0
 	var hp=player.health
 	player.take_damage(12)
-	check(player.health==hp-9,"Armor reduces incoming damage")
+	check(player.health==hp-7,"Leather armor combines with Guardian base defense")
 	player.health=35
 	check(world.use_item("potion")=="Vida recuperada" and player.health==80,"Potion consumes one item and heals")
 	player.health=player.max_health
@@ -240,7 +240,7 @@ func run():
 	DirAccess.remove_absolute(legacy_file.save_path)
 	world.rpg.add_item("iron_armor")
 	world.use_item("iron_armor")
-	check(world.rpg.defense()==5 and player.visual.hero_sheet.ends_with("v2/hero.png"),"Iron armor changes defense and actual animation sheet")
+	check(world.rpg.defense()==7 and player.visual.hero_sheet.ends_with("v2/hero.png"),"Iron armor combines with class defense and changes actual animation sheet")
 	world.use_item("leather_armor")
 	check(player.visual.hero_sheet.ends_with("valen_leather.png"),"Leather armor has a separate animated appearance")
 	world.hud.open_inventory()
@@ -251,7 +251,7 @@ func run():
 	var character_rect=world.hud.inventory_panel.get_global_rect()
 	check(character_rect.position.y>=0 and character_rect.end.y<=world.hud.root.size.y,"Character sheet fits viewport vertically")
 	world.hud.inventory_panel.character_sheet.remove_armor.pressed.emit()
-	check(world.rpg.equipment.armor=="" and world.rpg.defense()==0 and player.visual.hero_sheet.ends_with("valen_linen.png"),"Removing armor restores basic clothing without deleting the item")
+	check(world.rpg.equipment.armor=="" and world.rpg.defense()==2 and player.visual.hero_sheet.ends_with("valen_linen.png"),"Removing armor keeps Guardian base defense and restores basic clothing")
 	root.size=Vector2i(844,390)
 	for i in 5: await process_frame
 	character_rect=world.hud.inventory_panel.get_global_rect()

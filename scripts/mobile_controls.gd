@@ -191,11 +191,14 @@ func _draw_joystick():
 	joystick.draw_arc(joy_vector,28,0,TAU,32,Color(0.86,0.81,0.66),2,true)
 func _draw_map():
 	minimap.draw_style_box(box(Color(0.06,0.105,0.07,0.92),10),Rect2(0,0,160,103))
-	minimap.draw_line(Vector2(80,3),Vector2(80,100),Color(0.15,0.39,0.48),10)
-	minimap.draw_line(Vector2(32,56),Vector2(144,56),Color(0.67,0.56,0.35),4)
-	for p in [Vector2(30,34),Vector2(59,36),Vector2(30,66)]:
-		minimap.draw_rect(Rect2(p,Vector2(12,10)),Color(0.55,0.62,0.69))
-	var position = world.player.position/Vector2(1900,1100)*Vector2(156,99)+Vector2(2,2)
+	var extent = Vector2(2920,1450)
+	var map_size = Vector2(156,99)
+	var origin = Vector2(2,2)
+	minimap.draw_line(Vector2(987,0)/extent*map_size+origin,Vector2(987,1450)/extent*map_size+origin,Color(0.15,0.39,0.48),8)
+	minimap.draw_line(Vector2(360,610)/extent*map_size+origin,Vector2(2745,610)/extent*map_size+origin,Color(0.67,0.56,0.35),3)
+	for p in [Vector2(360,405),Vector2(700,420),Vector2(360,720),Vector2(2240,455),Vector2(2480,1065),Vector2(2680,645)]:
+		minimap.draw_rect(Rect2(p/extent*map_size+origin-Vector2(3,3),Vector2(6,6)),Color(0.55,0.62,0.69))
+	var position = world.player.position/extent*map_size+origin
 	minimap.draw_circle(position,4,Color(1,0.89,0.48))
 	for enemy in get_tree().get_nodes_in_group("enemy"):
-		if enemy.health>0: minimap.draw_circle(enemy.position/Vector2(1900,1100)*Vector2(156,99)+Vector2(2,2),2,Color(0.95,0.32,0.2))
+		if enemy.health>0: minimap.draw_circle(enemy.position/extent*map_size+origin,2,Color(0.95,0.32,0.2))

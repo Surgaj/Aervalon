@@ -13,6 +13,7 @@ func run():
 	await physics_frame
 	var world = current_scene
 	var player = world.player
+	check(player.get_node("Camera2D").limit_right==2920 and player.get_node("Camera2D").limit_bottom==1450,"Camera follows the expanded Elden world")
 	var starting_coins = world.coins
 	var residents = get_nodes_in_group("npc").filter(func(n): return n.appearance in ["lia","tomas"])
 	check(residents.filter(func(n): return n.position.x<1900).size()==2,"Two distinct residents populate existing village")

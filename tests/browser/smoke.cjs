@@ -237,6 +237,18 @@ const assert = require('node:assert/strict');
     assert.equal((await readState()).equipment.armor,'','Character sheet removes armor');
     await pressUI('Fechar');
     assert.equal((await readState()).modal,false,'Equipment sheet close button stays reachable on mobile');
+    // Follow the actual bridge and road into the extension; no QA teleport.
+    await walkAxis(0,880,'d','a');
+    await walkAxis(1,535,'s','w');
+    for (const [x,y] of [[920,555],[960,575],[1000,595],[1040,615],[1090,640]]) {
+      await walkAxis(0,x,'d','a');
+      await walkAxis(1,y,'s','w');
+    }
+    await walkAxis(1,685,'s','w');
+    await walkAxis(0,2250,'d','a');
+    await page.waitForTimeout(400);
+    assert.ok((await readState()).position[0]>2200,'Player reaches Elden outskirts through the bridge and road');
+    await page.screenshot({path:'qa/elden-outskirts-mobile.png'});
     const originalSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('aervalon.eryndor.v1')));
     assert.deepEqual(originalSave,legacy,'Original save remains untouched as backup');
     await page.keyboard.press('i');

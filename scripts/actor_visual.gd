@@ -1,6 +1,7 @@
 extends AnimatedSprite2D
 # Art adapter: gameplay only sets state and direction, never frame numbers.
 const ROOT = "res://assets/aervalon/v2/"
+var hero_sheet := "res://assets/aervalon/characters_v3/valen_linen.png"
 var kind := "hero"
 var state := "idle"
 var direction := Vector2.DOWN
@@ -9,12 +10,13 @@ func setup(actor_kind: String):
 	sprite_frames = SpriteFrames.new()
 	sprite_frames.remove_animation("default")
 	if kind == "hero":
-		var sheet = load(ROOT + "hero.png")
+		var sheet = load(hero_sheet)
+		var cell = Vector2(sheet.get_width()/8.0,sheet.get_height()/4.0)
 		for row in 4:
 			for action in ["idle", "walk", "attack", "hit", "death"]:
 				var frames: Array = {"idle":[0],"walk":[1,2,3,2],"attack":[4,5],"hit":[6],"death":[7]}[action]
-				_add(action + str(row), sheet, frames, Vector2(256,256), row, 9.0)
-		scale = Vector2.ONE * 0.34
+				_add(action + str(row), sheet, frames, cell, row, 9.0)
+		scale = Vector2.ONE * (87.04/cell.x)
 		position.y = -35
 	elif kind == "wolf":
 		for row in 2:
@@ -63,3 +65,20 @@ func set_state(value: String, facing: Vector2):
 func flash():
 	modulate = Color(1.8,0.55,0.45)
 	create_tween().tween_property(self,"modulate",Color.WHITE,0.2)
+
+static func sheet_for(rpg) -> String:
+	match rpg.equipment.armor:
+		"iron_armor": return "res://assets/aervalon/v2/hero.png"
+		"leather_armor": return "res://assets/aervalon/characters_v3/valen_leather.png"
+	return "res://assets/aervalon/characters_v3/valen_linen.png"
+static func portrait_for(rpg) -> AtlasTexture:
+	var texture=load(sheet_for(rpg))
+	var atlas=AtlasTexture.new()
+	atlas.atlas=texture
+	atlas.region=Rect2(0,0,texture.get_width()/8.0,texture.get_height()/4.0)
+	return atlas
+func apply_equipment(rpg):
+	var path=sheet_for(rpg)
+	if hero_sheet==path and sprite_frames!=null: return
+	hero_sheet=path
+	setup("hero")

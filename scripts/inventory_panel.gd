@@ -12,6 +12,9 @@ var feedback: Label
 var action: Button
 var equip_action: Button
 var tabs: HBoxContainer
+var categories: HBoxContainer
+var body: HBoxContainer
+var character_sheet
 func _ready():
 	world = get_tree().current_scene
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -42,11 +45,11 @@ func _ready():
 	column.add_child(stats)
 	tabs = HBoxContainer.new()
 	column.add_child(tabs)
-	for title in ["Mochila","Comprar","Vender"]:
+	for title in ["Mochila","Personagem","Comprar","Vender"]:
 		var button = make_button(title)
 		button.pressed.connect(func(): mode=title; selected=""; refresh())
 		tabs.add_child(button)
-	var categories = HBoxContainer.new()
+	categories = HBoxContainer.new()
 	column.add_child(categories)
 	for title in ["Todos","Consumíveis","Materiais","Equipamentos","Itens de missão"]:
 		var button = make_button(title)
@@ -54,7 +57,7 @@ func _ready():
 		button.custom_minimum_size.y = 40
 		button.pressed.connect(func(): category=title; selected=""; refresh())
 		categories.add_child(button)
-	var body = HBoxContainer.new()
+	body = HBoxContainer.new()
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(body)
 	var scroll = ScrollContainer.new()
@@ -82,6 +85,10 @@ func _ready():
 	equip_action = make_button("Usar / Equipar")
 	equip_action.pressed.connect(func(): feedback.text=world.use_item(selected); refresh())
 	right.add_child(equip_action)
+	character_sheet=HBoxContainer.new()
+	character_sheet.set_script(preload("res://scripts/character_sheet.gd"))
+	character_sheet.size_flags_vertical=Control.SIZE_EXPAND_FILL
+	column.add_child(character_sheet)
 	feedback = Label.new()
 	feedback.add_theme_font_size_override("font_size",17)
 	feedback.modulate = Color("f0d18c")
@@ -121,8 +128,14 @@ func refresh():
 	var r = world.rpg
 	stats.text = "%d moedas   •   Nv. %d   •   Ataque %d   •   Defesa %d   •   Vida %d/%d" % [r.coins,r.level,r.attack(),r.defense(),world.player.health,world.player.max_health]
 	for button in tabs.get_children():
-		button.visible = button.text=="Mochila" or shop!=""
+		button.visible = button.text in ["Mochila","Personagem"] or shop!=""
 		button.disabled = button.text==mode
+	character_sheet.visible=mode=="Personagem"
+	body.visible=mode!="Personagem"
+	categories.visible=mode!="Personagem"
+	if mode=="Personagem":
+		character_sheet.refresh()
+		feedback.text="Equipe itens pela aba Mochila. Arma e armadura estão disponíveis nesta etapa."
 	for child in grid.get_children():
 		grid.remove_child(child)
 		child.queue_free()

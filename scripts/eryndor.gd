@@ -22,7 +22,11 @@ var nearest_npc
 var nearest_object
 func _ready():
 	rpg.save_enabled = not "--test" in OS.get_cmdline_user_args()
-	rpg.load_game()
+	if rpg.save_enabled:
+		Roster.ensure_loaded()
+		if Roster.profiles.has(Roster.active_id):
+			rpg.restore(Roster.profiles[Roster.active_id].data)
+			rpg.profile_id = Roster.active_id
 	quest_started = rpg.quest != "available"
 	quest_complete = rpg.quest == "complete"
 	quest_kills = rpg.kills
@@ -42,6 +46,7 @@ func _ready():
 	$YSortWorld.add_child(player)
 	player.max_health = rpg.max_health()
 	player.health = player.max_health
+	player.visual.apply_equipment(rpg)
 	spawn_npc("Mara","mara",Vector2(650,540),25)
 	spawn_npc("Borin, o ferreiro","borin",Vector2(670,339),0)
 	spawn_npc("Nilo, mercador","merchant",Vector2(490,665),0)
@@ -72,6 +77,8 @@ func _ready():
 	if OS.has_feature("web"):
 		qa_enabled = "qa=1" in str(JavaScriptBridge.eval("window.location.search", true))
 		print("Aervalon Web QA enabled: ", qa_enabled)
+	if rpg.save_enabled and not Roster.in_game:
+		hud.character_menu.open()
 	show_message("Vale de Eryndor","Fale com Mara junto à ponte. WASD / setas para andar • E para falar • Espaço: atacar • Shift: esquivar.")
 func spawn_npc(title: String, appearance: String, point: Vector2, radius: float):
 	var npc = NPC.instantiate()
@@ -104,7 +111,7 @@ func _process(delta):
 		qa_clock += delta
 		if qa_clock>0.1:
 			qa_clock = 0
-			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"buttons":hud.inventory_panel.qa_buttons()}
+			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"profile":rpg.profile_id,"menu":hud.character_menu.visible,"character_name":Roster.profiles.get(rpg.profile_id,{}).get("name",""),"buttons":hud.character_menu.qa_buttons() if hud.character_menu.visible else hud.inventory_panel.qa_buttons()}
 			JavaScriptBridge.eval("document.querySelector('canvas').dataset.aervalon="+JSON.stringify(JSON.stringify(state)), true)
 func interact_nearby():
 	if player.death_time>0 or modal_open: return
@@ -168,16 +175,19 @@ func grant_xp(amount: int):
 		show_message("Nível %d!" % rpg.level,"Ataque +2 • Vida máxima +8 • Vida restaurada")
 		damage_number(player.position,rpg.level,Color.GOLD)
 	else: damage_number(player.position,amount,Color.LIGHT_SKY_BLUE)
-func persist():
+func persist() -> bool:
 	rpg.quest = "complete" if quest_complete else ("return" if quest_kills>=3 else ("active" if quest_started else "available"))
 	rpg.kills = quest_kills
 	rpg.chest_open = chest_open
-	if not rpg.save_game(): show_message("Não foi possível salvar", "O navegador bloqueou o armazenamento. Mantenha esta aba aberta para preservar esta sessão.")
+	var saved = rpg.save_game()
+	if not saved: show_message("Não foi possível salvar", "O navegador bloqueou o armazenamento. Mantenha esta aba aberta para preservar esta sessão.")
+	return saved
 func use_item(id: String) -> String:
 	if not rpg.inventory.has(id): return "Item indisponível"
 	var item = rpg.ITEMS[id]
 	if item.has("slot"):
 		rpg.equip(id)
+		player.visual.apply_equipment(rpg)
 		persist()
 		return "Equipado • Ataque %d • Defesa %d" % [rpg.attack(),rpg.defense()]
 	if item.has("heal"):

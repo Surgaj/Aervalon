@@ -98,6 +98,7 @@ const assert = require('node:assert/strict');
     await page.screenshot({path:'qa/well-echo.png'});
     // Return to open village ground for the mobile joystick test.
     await walkAxis(1,600,'s','w');
+    await walkAxis(0,650,'d','a'); // Leave room for joystick movement AND the dodge before the river.
     await page.setViewportSize({ width: 844, height: 390 });
     await page.waitForTimeout(400);
     await page.screenshot({ path: 'qa/eryndor-mobile.png' });
@@ -127,7 +128,7 @@ const assert = require('node:assert/strict');
     await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{...dodge,id:0}]});
     await page.waitForTimeout(150);
     await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
-    await page.waitForTimeout(150);
+    await page.waitForFunction(() => { const s=JSON.parse(document.querySelector('canvas').dataset.aervalon); return s.dodge_cooldown>0 && s.dodge_cooldown<1; }, null, {timeout:5000});
     const afterDodge = await readState();
     assert.ok(afterDodge.dodge_cooldown>0,'Mobile dodge button starts cooldown');
     assert.ok(afterDodge.position[0]>beforeDodge.position[0]+15,'Touch dodge physically displaces player');

@@ -5,6 +5,9 @@ config_version=5
 config/name="Aervalon"
 run/main_scene="res://scenes/world/eryndor.tscn"
 
+[autoload]
+Roster="*res://scripts/character_roster.gd"
+
 [display]
 window/size/viewport_width=1280
 window/size/viewport_height=720

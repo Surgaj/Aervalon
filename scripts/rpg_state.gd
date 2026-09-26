@@ -4,6 +4,7 @@ const ITEMS = {
 	"river_herb": {"name":"Erva de Orvalho", "type":"Consumíveis", "heal":15, "price":0, "value":2, "icon":"herb", "description":"Colhida no vale. Recupera 15 de vida."},
 	"rusty_sword": {"name":"Espada Enferrujada", "type":"Equipamentos", "slot":"weapon", "attack":5, "price":8, "value":3, "icon":"sword", "description":"Uma lâmina gasta. Ataque +5."},
 	"iron_sword": {"name":"Espada de Ferro", "type":"Equipamentos", "slot":"weapon", "attack":18, "price":38, "value":15, "icon":"sword", "description":"Forjada por Borin. Ataque +18."},
+	"iron_armor": {"name":"Armadura de Ferro", "type":"Equipamentos", "slot":"armor", "defense":5, "price":55, "value":22, "icon":"armor", "description":"Placas e capa de viagem. Defesa +5."},
 	"leather_armor": {"name":"Armadura Simples", "type":"Equipamentos", "slot":"armor", "defense":3, "price":24, "value":9, "icon":"armor", "description":"Couro reforçado. Defesa +3."},
 	"potion": {"name":"Poção de Vida", "type":"Consumíveis", "heal":45, "price":8, "value":3, "icon":"potion", "description":"Recupera 45 pontos de vida."},
 	"bread": {"name":"Pão da Vila", "type":"Consumíveis", "heal":20, "price":4, "value":1, "icon":"bread", "description":"Recupera 20 pontos de vida."},
@@ -11,7 +12,7 @@ const ITEMS = {
 	"wolf_fang": {"name":"Presa de Lobo", "type":"Materiais", "price":0, "value":3, "icon":"fang", "description":"Uma presa afiada encontrada na floresta."},
 	"mara_token": {"name":"Selo de Eryndor", "type":"Itens de missão", "price":0, "value":0, "icon":"seal", "description":"Mara agradece por tornar a estrada segura."}
 }
-const SHOPS = {"borin":["iron_sword","leather_armor"], "merchant":["potion","bread"]}
+const SHOPS = {"borin":["iron_sword","leather_armor","iron_armor"], "merchant":["potion","bread"]}
 var level := 1
 var xp := 0
 var coins := 12
@@ -23,6 +24,7 @@ var chest_open := false
 var herbalism := 0
 var harvested := {}
 var discoveries := {}
+var profile_id := ""
 var save_enabled := true
 var save_path := "user://eryndor_rpg_v1.json"
 func xp_needed() -> int: return 60 + (level-1)*35
@@ -101,6 +103,8 @@ func restore(data) -> bool:
 	return true
 func save_game() -> bool:
 	if not save_enabled: return true
+	if profile_id!="":
+		return Engine.get_main_loop().root.get_node("Roster").save_profile(profile_id,snapshot())
 	var text = JSON.stringify(snapshot())
 	# Origin-scoped key stays stable across immutable Web build URLs.
 	if OS.has_feature("web"):

@@ -258,11 +258,61 @@ func run():
 	check(character_rect.position.y>=0 and character_rect.end.y<=world.hud.root.size.y,"Mobile equipment panel relayout keeps header and footer on screen")
 	world.hud.inventory_panel.close()
 	for instance in [roster,roster_copy,migration,migration_reload]: instance.free()
+	var race_roster=load("res://scripts/character_roster.gd").new()
+	race_roster.save_enabled=false
+	for race_id in load("res://scripts/races.gd").ALL:
+		var id=race_roster.create_character("Teste "+race_id,race_id)
+		check(id!="" and race_roster.profiles[id].race==race_id,"Create persistent race identity: "+race_id)
+		world.rpg.race=race_id
+		world.use_item("iron_armor")
+		check(player.visual.hero_race==race_id and player.visual.sprite_frames.has_animation("death3"),"Equipment retains race and full animation set: "+race_id)
+		player.position=Vector2(600,600)
+		player.set_touch_direction(Vector2.RIGHT)
+		for i in 15: await physics_frame
+		player.set_touch_direction(Vector2.ZERO)
+		check(player.position.x>620,"Race uses real movement controller: "+race_id)
+	var restored_races=load("res://scripts/character_roster.gd").new()
+	restored_races.save_enabled=false
+	check(restored_races.restore(race_roster.snapshot()) and restored_races.profiles.size()==7,"All seven races survive roster restore")
+	var deleted_id=race_roster.profiles.keys()[0]
+	var deleted_name=race_roster.profiles[deleted_id].name
+	race_roster.select_character(deleted_id)
+	check(not race_roster.delete_character(deleted_id,"Wrong name") and race_roster.profiles.size()==7,"Stale deletion confirmation cannot remove a character")
+	race_roster.in_game=true
+	check(not race_roster.delete_character(deleted_id,deleted_name),"Cannot delete a character while playing")
+	race_roster.in_game=false
+	race_roster.save_enabled=true
+	race_roster.save_path="user://qa-nonexistent-directory/characters.json"
+	check(not race_roster.delete_character(deleted_id,deleted_name) and race_roster.profiles.size()==7 and race_roster.active_id==deleted_id,"Failed save rolls back deletion and selection")
+	race_roster.save_enabled=false
+	check(race_roster.delete_character(deleted_id,deleted_name) and race_roster.profiles.size()==6 and race_roster.active_id!=deleted_id,"Deleting active profile preserves others and selects a survivor")
+	for id in race_roster.profiles.keys(): race_roster.delete_character(id,race_roster.profiles[id].name)
+	race_roster.save_enabled=true
+	race_roster.save_path="user://qa-empty-roster.json"
+	check(race_roster.flush(),"Deleting the last character writes an explicit empty roster")
+	var empty_reload=load("res://scripts/character_roster.gd").new()
+	empty_reload.save_path=race_roster.save_path
+	empty_reload.ensure_loaded()
+	check(empty_reload.profiles.is_empty() and empty_reload.active_id=="","Reload does not resurrect the last deleted character")
+	DirAccess.remove_absolute(race_roster.save_path)
+	for instance in [race_roster,restored_races,empty_reload]: instance.free()
 	well.echo.stop()
 	well.echo.stream=null
 	await create_timer(0.1).timeout # Let the audio mixer release its playback before teardown.
 	current_scene.queue_free()
 	await process_frame
+	await process_frame
+	var global_roster=get_root().get_node("Roster")
+	global_roster.loaded=true
+	global_roster.save_enabled=false
+	global_roster.profiles.clear()
+	global_roster.active_id=""
+	change_scene_to_file("res://scenes/ui/title_screen.tscn")
+	for i in 5: await process_frame
+	check(current_scene.name=="TitleScreen" and get_nodes_in_group("enemy").is_empty() and get_nodes_in_group("npc").is_empty(),"Title screen is a separate scene with no loaded village actors")
+	var menu_rect=current_scene.menu.get_global_rect()
+	check(menu_rect.position.y>=0 and menu_rect.end.y<=current_scene.get_viewport_rect().size.y,"Race creation fits the mobile title viewport")
+	current_scene.queue_free()
 	await process_frame
 	print("SLICE TEST COMPLETE: ",failures," failure(s)")
 	quit(1 if failures else 0)

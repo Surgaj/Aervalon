@@ -16,6 +16,11 @@ raça e revelações de The Below permanecem mistérios.
   atributos, retirada de armadura e retorno à seleção.
 - Linho, couro e ferro possuem animações de corpo inteiro diferentes.
 - Borin vende couro e ferro; atributos continuam afetando o combate real.
+- Nilo usa arte própria e organiza frutas; não compartilha o sprite de Eldric.
+- Lia e Tomás caminham por percursos definidos na vila, pausam e possuem falas.
+  Usam colisões do mundo, não bloqueiam o jogador e param durante menus.
+- O mapa mantém suas dimensões atuais. A próxima expansão proposta conecta
+  Eryndor às estradas e fazendas de Elden; outros países não estão implementados.
 
 ## Persistência
 

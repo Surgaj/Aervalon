@@ -53,6 +53,12 @@ func _ready():
 	spawn_npc("Eldric","eldric",Vector2(585,795),20)
 	spawn_npc("Guarda de Eryndor","guard",Vector2(827,560),35)
 	spawn_npc("Galinha","hen",Vector2(440,530),40)
+	var lia = spawn_npc("Lia, a padeira","lia",Vector2(540,720),0)
+	lia.route.assign([Vector2(560,720),Vector2(560,615),Vector2(520,590),Vector2(520,720)])
+	lia.role = "O pão já saiu do forno. Quando a estrada estiver segura, levarei uma cesta às fazendas de Elden."
+	var tomas = spawn_npc("Tomás, carregador","tomas",Vector2(240,530),0)
+	tomas.route.assign([Vector2(240,760),Vector2(270,815),Vector2(270,530)])
+	tomas.role = "Nilo está esperando estes sacos. Um dia ainda compro uma carroça para as entregas."
 	for point in [Vector2(1250,570),Vector2(1450,655),Vector2(1640,530)]:
 		var wolf = WOLF.instantiate()
 		wolf.position = point
@@ -87,6 +93,7 @@ func spawn_npc(title: String, appearance: String, point: Vector2, radius: float)
 	npc.position = point
 	npc.wander_radius = radius
 	$YSortWorld.add_child(npc)
+	return npc
 func _process(delta):
 	if not is_instance_valid(player): return
 	message_time = maxf(0,message_time-delta)
@@ -96,6 +103,7 @@ func _process(delta):
 		if npc.appearance == "hen": continue
 		var interact_point = npc.global_position+Vector2(0,80) if npc.appearance=="borin" else npc.global_position
 		var distance = player.global_position.distance_to(interact_point)
+		if npc.appearance in ["lia","tomas"] and distance>42: continue
 		if distance<best:
 			best = distance
 			nearest_npc = npc
@@ -151,6 +159,7 @@ func npc_dialogue(npc):
 			hud.open_inventory("merchant")
 			show_message("Nilo", "Pão fresco e poções para a estrada. Posso comprar o que encontrou na floresta.")
 		"eldric": show_message("Eldric","Você também ouviu? Eu conheço este poço desde menino. Nunca houve outro som além da água. Não sabemos o que existe lá embaixo." if rpg.discoveries.has("well_echo") else "Desde o tremor, às vezes o poço responde antes de a água cair. Escute com calma, se passar por lá.")
+		"lia","tomas": show_message(npc.npc_name,npc.role)
 		_: show_message(npc.npc_name,"Mara precisa de ajuda. A estrada do outro lado da ponte já não é segura.")
 	persist()
 func _enemy_died(wolf = null):

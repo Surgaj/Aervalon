@@ -26,6 +26,14 @@ func setup(actor_kind: String):
 				_add(action + str(row),sheet,frames,Vector2(256,256),0,8.0)
 		scale = Vector2.ONE * 0.30
 		position.y = -23
+	elif kind in ["merchant","lia","tomas"]:
+		var sheet = load("res://assets/aervalon/citizens_v3/"+kind+".png")
+		var cell = Vector2(sheet.get_width()/4.0,sheet.get_height())
+		_add("idle0",sheet,[0],cell,0,3)
+		_add("walk0",sheet,[1,2,3,2],cell,0,5)
+		if kind=="merchant": _add("work0",sheet,[0,1,2,2,3,0],cell,0,2)
+		scale = Vector2.ONE * (87.0/cell.y if kind=="tomas" else 77.0/cell.y)
+		position.y = -33
 	else:
 		var sheet = load(ROOT + kind + ".png")
 		var count = {"mara":2,"borin":3,"eldric":1,"guard":2,"hen":2}.get(kind,1)

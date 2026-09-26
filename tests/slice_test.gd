@@ -14,6 +14,26 @@ func run():
 	var world = current_scene
 	var player = world.player
 	var starting_coins = world.coins
+	var residents = get_nodes_in_group("npc").filter(func(n): return n.appearance in ["lia","tomas"])
+	check(residents.size()==2,"Two distinct residents populate existing village")
+	var merchant = get_nodes_in_group("npc")[2]
+	check(merchant.get_node("Visual").kind=="merchant" and merchant.get_node("Visual").sprite_frames.has_animation("work0"),"Merchant has his own animated art instead of elder sprite")
+	for resident in residents:
+		for i in resident.route.size():
+			var a = resident.route[i]
+			var b = resident.route[(i+1)%resident.route.size()]
+			var query = PhysicsRayQueryParameters2D.create(a,b,1)
+			check(player.get_world_2d().direct_space_state.intersect_ray(query).is_empty(),"Resident route avoids solid world geometry")
+		resident.wait=0
+		resident.target=resident.route[0]
+	var resident_start = residents[1].position
+	for i in 60: await physics_frame
+	check(residents[1].position.distance_to(resident_start)>15,"Resident physically walks its delivery route")
+	world.modal_open=true
+	resident_start=residents[1].position
+	for i in 15: await physics_frame
+	check(residents[1].position.distance_to(resident_start)<0.1,"Residents pause during menus and conversations")
+	world.modal_open=false
 	check(world.get_node("YSortWorld").y_sort_enabled,"Actors and props share Y-sort")
 	check(get_nodes_in_group("enemy").size()==3,"Three wolves loaded with raster animation")
 	var mara = get_nodes_in_group("npc")[0]
@@ -226,11 +246,17 @@ func run():
 	world.hud.open_inventory()
 	world.hud.inventory_panel.mode="Personagem"
 	world.hud.inventory_panel.refresh()
+	await process_frame
+	await process_frame
+	var character_rect=world.hud.inventory_panel.get_global_rect()
+	check(character_rect.position.y>=0 and character_rect.end.y<=world.hud.root.size.y,"Character sheet fits viewport vertically")
 	world.hud.inventory_panel.character_sheet.remove_armor.pressed.emit()
 	check(world.rpg.equipment.armor=="" and world.rpg.defense()==0 and player.visual.hero_sheet.ends_with("valen_linen.png"),"Removing armor restores basic clothing without deleting the item")
 	world.hud.inventory_panel.close()
 	for instance in [roster,roster_copy,migration,migration_reload]: instance.free()
 	well.echo.stop()
+	well.echo.stream=null
+	await create_timer(0.1).timeout # Let the audio mixer release its playback before teardown.
 	current_scene.queue_free()
 	await process_frame
 	await process_frame

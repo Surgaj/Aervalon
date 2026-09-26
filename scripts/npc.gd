@@ -10,15 +10,20 @@ var wait := 0.0
 var facing := Vector2.DOWN
 var conversation := 0.0
 var work_clock := 0.0
+var route: Array[Vector2] = []
+var route_index := 0
 func _ready():
 	origin = global_position
 	target = origin
-	$Visual.setup("eldric" if appearance=="merchant" else appearance)
+	$Visual.setup(appearance)
 	if appearance=="borin": $Visual.frame_changed.connect(_hammer_hit)
 func _physics_process(delta):
 	conversation = maxf(0,conversation-delta)
 	if conversation>0 or get_tree().current_scene.modal_open:
 		$Visual.set_state("idle",facing)
+		return
+	if appearance == "merchant":
+		$Visual.set_state("work",Vector2.RIGHT)
 		return
 	if appearance == "borin":
 		work_clock = fmod(work_clock+delta,4.5)
@@ -30,7 +35,11 @@ func _physics_process(delta):
 		return
 	if global_position.distance_to(target)<5:
 		wait = randf_range(1.5,3)
-		target = origin+Vector2(randf_range(-wander_radius,wander_radius),randf_range(-wander_radius,wander_radius)*0.5)
+		if not route.is_empty():
+			target = route[route_index]
+			route_index = (route_index+1)%route.size()
+		else:
+			target = origin+Vector2(randf_range(-wander_radius,wander_radius),randf_range(-wander_radius,wander_radius)*0.5)
 		return
 	velocity = global_position.direction_to(target)*speed
 	facing = velocity.normalized()

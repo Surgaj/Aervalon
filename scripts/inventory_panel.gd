@@ -90,6 +90,7 @@ func _ready():
 	character_sheet.size_flags_vertical=Control.SIZE_EXPAND_FILL
 	column.add_child(character_sheet)
 	feedback = Label.new()
+	feedback.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	feedback.add_theme_font_size_override("font_size",17)
 	feedback.modulate = Color("f0d18c")
 	column.add_child(feedback)

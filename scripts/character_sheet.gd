@@ -8,7 +8,7 @@ func _ready():
 	world=get_tree().current_scene
 	add_theme_constant_override("separation",24)
 	portrait=TextureRect.new()
-	portrait.custom_minimum_size=Vector2(250,260)
+	portrait.custom_minimum_size=Vector2(200,160)
 	portrait.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.size_flags_horizontal=Control.SIZE_EXPAND_FILL
@@ -17,7 +17,7 @@ func _ready():
 	right.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	add_child(right)
 	identity=Label.new()
-	identity.add_theme_font_size_override("font_size",23)
+	identity.add_theme_font_size_override("font_size",21)
 	right.add_child(identity)
 	slots=Label.new()
 	slots.add_theme_font_size_override("font_size",19)
@@ -40,5 +40,5 @@ func refresh():
 	var r=world.rpg
 	portrait.texture=preload("res://scripts/actor_visual.gd").portrait_for(r)
 	identity.text="%s\nValen • Guardião" % Roster.profiles.get(r.profile_id,{}).get("name","Viajante")
-	slots.text="ARMA\n%s\n\nARMADURA\n%s" % [r.ITEMS.get(r.equipment.weapon,{"name":"Nenhuma"}).name,r.ITEMS.get(r.equipment.armor,{"name":"Roupa de linho • sem proteção"}).name]
+	slots.text="Arma: %s\nArmadura: %s" % [r.ITEMS.get(r.equipment.weapon,{"name":"Nenhuma"}).name,r.ITEMS.get(r.equipment.armor,{"name":"Roupa de linho"}).name]
 	remove_armor.disabled=r.equipment.armor==""

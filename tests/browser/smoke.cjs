@@ -64,6 +64,7 @@ const assert = require('node:assert/strict');
       const state=await readState();
       const entry=Object.entries(state.buttons).find(([text])=>text.startsWith(prefix));
       assert.ok(entry,'Visible UI button: '+prefix);
+      assert.ok(entry[1][0]>=0 && entry[1][0]<=state.viewport[0] && entry[1][1]>=0 && entry[1][1]<=state.viewport[1],'UI button inside viewport: '+prefix);
       const bounds=await page.locator('canvas').boundingBox();
       await page.mouse.click(bounds.x+entry[1][0]/state.viewport[0]*bounds.width,bounds.y+entry[1][1]/state.viewport[1]*bounds.height);
       await page.waitForTimeout(200);

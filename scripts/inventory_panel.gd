@@ -134,9 +134,9 @@ func refresh():
 	character_sheet.visible=mode=="Personagem"
 	body.visible=mode!="Personagem"
 	categories.visible=mode!="Personagem"
+	feedback.visible=mode!="Personagem"
 	if mode=="Personagem":
 		character_sheet.refresh()
-		feedback.text="Equipe itens pela aba Mochila. Arma e armadura estão disponíveis nesta etapa."
 	for child in grid.get_children():
 		grid.remove_child(child)
 		child.queue_free()

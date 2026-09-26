@@ -274,14 +274,14 @@ func run():
 	var class_roster=load("res://scripts/character_roster.gd").new()
 	class_roster.save_enabled=false
 	for class_id in load("res://scripts/classes.gd").ALL:
-		var class_name="Classe "+class_id
-		var class_profile=class_roster.create_character(class_name,"valen",class_id)
+		var fixture_name="Classe "+class_id
+		var class_profile=class_roster.create_character(fixture_name,"valen",class_id)
 		check(class_profile!="" and class_roster.profiles[class_profile].get("class","")==class_id,"Create persistent class identity: "+class_id)
 		var class_state=load("res://scripts/rpg_state.gd").new()
 		check(class_state.restore(class_roster.profiles[class_profile].data),"Restore class starter snapshot: "+class_id)
 		class_state.class_id=class_id
 		check(class_state.equipment.weapon==load("res://scripts/classes.gd").ALL[class_id].starter and class_state.can_equip(class_state.equipment.weapon),"Class starts with compatible weapon: "+class_id)
-		check(class_roster.delete_character(class_profile,class_name),"Class fixture can be deleted without affecting the roster limit: "+class_id)
+		check(class_roster.delete_character(class_profile,fixture_name),"Class fixture can be deleted without affecting the roster limit: "+class_id)
 	check(class_roster.profiles.is_empty(),"Ten class fixtures were validated without raising the eight-character player limit")
 	var restored_races=load("res://scripts/character_roster.gd").new()
 	restored_races.save_enabled=false

@@ -79,7 +79,7 @@ func interact():
 		else:
 			world.show_message("O poço responde","As batidas continuam, profundas e regulares. Talvez Eldric também as tenha ouvido.")
 		echo_time = 3.2
-		echo.play()
+		if not echo.playing: echo.play()
 		shimmer.restart()
 		shimmer.emitting = true
 	world.persist()

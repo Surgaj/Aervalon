@@ -74,8 +74,8 @@ func _ready():
 	var iria = spawn_npc("Iria, agricultora","lia",Vector2(2230,690),0)
 	iria.route.assign([Vector2(2190,690),Vector2(2240,520),Vector2(2420,520),Vector2(2450,700),Vector2(2230,690)])
 	iria.role = "A colheita segue mesmo com os lobos na mata. A estrada para a vila precisa continuar aberta."
-	var bento = spawn_npc("Bento, carreteiro","tomas",Vector2(2580,760),0)
-	bento.route.assign([Vector2(2460,760),Vector2(2660,760),Vector2(2700,625),Vector2(2500,610)])
+	var bento = spawn_npc("Bento, carreteiro","tomas",Vector2(2580,705),0)
+	bento.route.assign([Vector2(2460,705),Vector2(2600,705),Vector2(2600,560),Vector2(2460,560)])
 	bento.role = "Levo mantimentos entre as propriedades e Eryndor. Quando a rota acalma, todo mundo sente no preço."
 	for entry in [[Vector2(2160,820),[Vector2(2160,820),Vector2(2250,840),Vector2(2220,900)]],[Vector2(2410,1180),[Vector2(2410,1180),Vector2(2510,1210),Vector2(2580,1160)]],[Vector2(2730,800),[Vector2(2730,800),Vector2(2800,850),Vector2(2740,910)]]]:
 		var farm_hen = spawn_npc("Galinha","hen",entry[0],0)

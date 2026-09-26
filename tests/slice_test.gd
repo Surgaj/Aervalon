@@ -15,7 +15,8 @@ func run():
 	var player = world.player
 	var starting_coins = world.coins
 	var residents = get_nodes_in_group("npc").filter(func(n): return n.appearance in ["lia","tomas"])
-	check(residents.size()==2,"Two distinct residents populate existing village")
+	check(residents.filter(func(n): return n.position.x<1900).size()==2,"Two distinct residents populate existing village")
+	check(residents.size()==4,"Two rural workers join the village residents")
 	var merchant = get_nodes_in_group("npc")[2]
 	check(merchant.get_node("Visual").kind=="merchant" and merchant.get_node("Visual").sprite_frames.has_animation("work0"),"Merchant has his own animated art instead of elder sprite")
 	for resident in residents:
@@ -23,7 +24,7 @@ func run():
 			var a = resident.route[i]
 			var b = resident.route[(i+1)%resident.route.size()]
 			var query = PhysicsRayQueryParameters2D.create(a,b,1)
-			check(player.get_world_2d().direct_space_state.intersect_ray(query).is_empty(),"Resident route avoids solid world geometry")
+			check(player.get_world_2d().direct_space_state.intersect_ray(query).is_empty(),"%s route %d avoids solid world geometry" % [resident.npc_name,i])
 		resident.wait=0
 		resident.target=resident.route[0]
 	var resident_start = residents[1].position

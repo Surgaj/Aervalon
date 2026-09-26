@@ -53,6 +53,8 @@ func _ready():
 	for point in [Vector2(2050,735),Vector2(2200,760),Vector2(2370,735),Vector2(2540,770),Vector2(2730,740),Vector2(2030,1010),Vector2(2320,1190),Vector2(2640,1210)]:
 		var meadow = prop("flowers",point,variation.randf_range(52,86),Vector2(24,12))
 		meadow.flip_h = variation.randf()>0.5
+	# Keep the approved village/forest variations stable when adding outskirts.
+	variation.seed = 417
 	# Trees frame routes and offer deliberate front/back occlusion test points.
 	for point in [Vector2(150,270),Vector2(155,600),Vector2(150,940),Vector2(380,980),Vector2(700,1010),Vector2(820,265),Vector2(1110,275),Vector2(1300,330),Vector2(1510,300),Vector2(1730,380),Vector2(1820,600),Vector2(1170,890),Vector2(1390,950),Vector2(1630,870),Vector2(590,205),Vector2(350,160),Vector2(1700,1040),Vector2(1850,950),Vector2(1490,145),Vector2(1220,130)]:
 		var width = variation.randf_range(188,236)

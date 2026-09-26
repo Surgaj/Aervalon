@@ -79,7 +79,7 @@ const assert = require('node:assert/strict');
     await page.setViewportSize({width:1280,height:720});
     await page.waitForTimeout(400);
     await page.keyboard.press('Escape');
-    await walkAxis(1,470,'s','w');
+    await walkAxis(1,450,'s','w'); // Stand at the forge frontage, outside Mara's wandering interaction area.
     await walkAxis(0,670,'d','a');
     await page.keyboard.press('e');
     await page.waitForTimeout(250);

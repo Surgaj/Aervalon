@@ -8,14 +8,20 @@ func _ready():
 	world=get_tree().current_scene
 	add_theme_constant_override("separation",24)
 	portrait=TextureRect.new()
-	portrait.custom_minimum_size=Vector2(200,160)
+	portrait.custom_minimum_size=Vector2(170,120)
 	portrait.expand_mode=TextureRect.EXPAND_IGNORE_SIZE
 	portrait.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	portrait.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	add_child(portrait)
+	var scroll=ScrollContainer.new()
+	scroll.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL
+	scroll.custom_minimum_size=Vector2(280,0)
+	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(scroll)
 	var right=VBoxContainer.new()
 	right.size_flags_horizontal=Control.SIZE_EXPAND_FILL
-	add_child(right)
+	scroll.add_child(right)
 	identity=Label.new()
 	identity.add_theme_font_size_override("font_size",21)
 	right.add_child(identity)

@@ -10,10 +10,12 @@ func _ready():
 	variation.seed = 417
 	yworld = get_parent().get_node("YSortWorld")
 	terrain = get_parent().get_node("Terrain")
-	ground("grass",Rect2(0,0,1900,1100),false,Color(0.58,0.68,0.51))
+	ground("grass",Rect2(0,0,2920,1450),false,Color(0.58,0.68,0.51))
 	ground("cobble",Rect2(180,260,700,650),true,Color(0.94,0.92,0.84))
-	ground("dirt",Rect2(1025,505,780,220),true,Color(0.87,0.83,0.72))
-	var river = ground("water",Rect2(915,0,145,1100),false,Color(0.65,0.9,0.92))
+	ground("dirt",Rect2(1025,505,1720,220),true,Color(0.87,0.83,0.72))
+	ground("dirt",Rect2(2070,245,520,235),true,Color(0.78,0.73,0.58))
+	ground("dirt",Rect2(2140,875,540,260),true,Color(0.76,0.70,0.56))
+	var river = ground("water",Rect2(915,0,145,1450),false,Color(0.65,0.9,0.92))
 	var water_shader = Shader.new()
 	water_shader.code = "shader_type canvas_item; varying vec4 tint; varying vec2 local; void vertex(){tint=COLOR;local=VERTEX;} void fragment(){ vec2 uv=UV+vec2(sin(UV.y*26.0+TIME)*0.009,TIME*0.018); float edge=abs(local.x)+12.0*sin(local.y*0.013)+7.0*sin(local.y*0.039); vec4 c=texture(TEXTURE,uv)*tint; c.a*=1.0-smoothstep(249.0,290.0,edge); COLOR=c; }"
 	var material = ShaderMaterial.new()
@@ -21,7 +23,7 @@ func _ready():
 	river.material = material
 	# The diagonal deck crosses the river; banks follow both deck edges.
 	wall_polygon([Vector2(915,0),Vector2(1060,0),Vector2(1060,579),Vector2(915,509)])
-	wall_polygon([Vector2(915,589),Vector2(1060,659),Vector2(1060,1100),Vector2(915,1100)])
+	wall_polygon([Vector2(915,589),Vector2(1060,659),Vector2(1060,1450),Vector2(915,1450)])
 	prop("bridge",Vector2(990,684),330,Vector2.ZERO,false)
 	prop("house",Vector2(360,405),310,Vector2(210,85))
 	var forge = prop("forge",Vector2(700,420),310,Vector2(200,65))
@@ -35,6 +37,22 @@ func _ready():
 	prop("flowers",Vector2(271,450),83,Vector2.ZERO)
 	prop("flowers",Vector2(805,777),88,Vector2.ZERO)
 	prop("flowers",Vector2(527,825),92,Vector2.ZERO)
+	# Elden outskirts: a real continuation beyond the old eastern boundary.
+	# It reuses approved raster materials/props; no screenshot backdrop or procedural geometry.
+	prop("house",Vector2(2240,455),270,Vector2(185,76))
+	prop("house",Vector2(2480,1065),245,Vector2(170,70))
+	prop("supplies",Vector2(2140,525),86,Vector2(52,30))
+	prop("supplies",Vector2(2570,1110),78,Vector2(48,28))
+	prop("market",Vector2(2680,645),180,Vector2(112,48))
+	for point in [Vector2(2010,180),Vector2(2200,145),Vector2(2420,160),Vector2(2660,190),Vector2(2840,330),Vector2(2860,650),Vector2(2800,920),Vector2(2710,1260),Vector2(2460,1320),Vector2(2210,1280),Vector2(2020,1150)]:
+		var width = variation.randf_range(176,226)
+		var tree = prop("tree",point+Vector2(variation.randf_range(-12,12),variation.randf_range(-8,8)),width,Vector2(27,24))
+		tree.flip_h = variation.randf()>0.5
+		tree.modulate = Color(variation.randf_range(0.91,1.0),variation.randf_range(0.93,1.0),variation.randf_range(0.89,1.0))
+		trees.append(tree)
+	for point in [Vector2(2050,735),Vector2(2200,760),Vector2(2370,735),Vector2(2540,770),Vector2(2730,740),Vector2(2030,1010),Vector2(2320,1190),Vector2(2640,1210)]:
+		var meadow = prop("flowers",point,variation.randf_range(52,86),Vector2(24,12))
+		meadow.flip_h = variation.randf()>0.5
 	# Trees frame routes and offer deliberate front/back occlusion test points.
 	for point in [Vector2(150,270),Vector2(155,600),Vector2(150,940),Vector2(380,980),Vector2(700,1010),Vector2(820,265),Vector2(1110,275),Vector2(1300,330),Vector2(1510,300),Vector2(1730,380),Vector2(1820,600),Vector2(1170,890),Vector2(1390,950),Vector2(1630,870),Vector2(590,205),Vector2(350,160),Vector2(1700,1040),Vector2(1850,950),Vector2(1490,145),Vector2(1220,130)]:
 		var width = variation.randf_range(188,236)
@@ -53,16 +71,17 @@ func _ready():
 	for y in [60,155,270,375,455,765,850,950,1070]:
 		prop("flowers",Vector2(913-variation.randf_range(0,8),y),variation.randf_range(38,62),Vector2.ZERO)
 		prop("flowers",Vector2(1063+variation.randf_range(0,8),y+30),variation.randf_range(38,62),Vector2.ZERO)
-	wall(Rect2(-30,-30,1960,30))
-	wall(Rect2(-30,1100,1960,30))
-	wall(Rect2(-30,0,30,1100))
-	wall(Rect2(1900,0,30,1100))
+	wall(Rect2(-30,-30,2980,30))
+	wall(Rect2(-30,1450,2980,30))
+	wall(Rect2(-30,0,30,1450))
+	wall(Rect2(2920,0,30,1450))
 	particles(Vector2(736,321),Color(1,0.43,0.07,0.85),18,Vector2(0,-22),1.0,2.6)
 	particles(Vector2(718,133),Color(0.65,0.70,0.68,0.28),12,Vector2(12,-22),3.0,7)
 	particles(Vector2(414,116),Color(0.65,0.70,0.68,0.22),9,Vector2(12,-22),3.0,6)
 	particles(Vector2(987,850),Color(0.75,0.95,1,0.6),22,Vector2(0,26),2.0,2)
 	label_at("ERYNDOR",Vector2(535,285),18,Color(0.9,0.82,0.57))
 	label_at("FLORESTA SUSSURRANTE",Vector2(1250,465),14,Color(0.8,0.85,0.66))
+	label_at("ESTRADAS DE ELDEN",Vector2(2180,585),15,Color(0.88,0.82,0.62))
 func ground(asset: String, rect: Rect2, feather: bool, tint: Color) -> Sprite2D:
 	var sprite = Sprite2D.new()
 	sprite.texture = load(ROOT+asset+".png")

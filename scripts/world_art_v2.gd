@@ -33,7 +33,7 @@ func _ready():
 	prop("supplies",Vector2(798,445),70,Vector2(45,28))
 	prop("supplies",Vector2(441,721),70,Vector2(45,28))
 	prop("flowers",Vector2(271,450),83,Vector2.ZERO)
-	prop("flowers",Vector2(780,777),88,Vector2.ZERO)
+	prop("flowers",Vector2(805,777),88,Vector2.ZERO)
 	prop("flowers",Vector2(527,825),92,Vector2.ZERO)
 	# Trees frame routes and offer deliberate front/back occlusion test points.
 	for point in [Vector2(150,270),Vector2(155,600),Vector2(150,940),Vector2(380,980),Vector2(700,1010),Vector2(820,265),Vector2(1110,275),Vector2(1300,330),Vector2(1510,300),Vector2(1730,380),Vector2(1820,600),Vector2(1170,890),Vector2(1390,950),Vector2(1630,870),Vector2(590,205),Vector2(350,160),Vector2(1700,1040),Vector2(1850,950),Vector2(1490,145),Vector2(1220,130)]:

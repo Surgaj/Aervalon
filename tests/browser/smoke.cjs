@@ -88,7 +88,7 @@ const assert = require('node:assert/strict');
     await page.screenshot({path:'qa/shop-borin.png'});
     await page.keyboard.press('Escape');
     // New exploration uses the actual nearby-object button, no QA mutations.
-    await walkAxis(0,745,'d','a');
+    await walkAxis(0,760,'d','a'); // Clear the well footprint with room for the player's body.
     await walkAxis(1,710,'s','w');
     assert.equal((await readState()).interaction,'herb_village','Plant has a comfortable contextual radius');
     await page.keyboard.press('e');

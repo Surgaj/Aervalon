@@ -15,3 +15,7 @@ Classes aprovadas:
 - Ecoante — lâmina/bastão + foco; Tempo, Memória, Ruptura.
 
 Nesta etapa, as dez classes já podem ser escolhidas na criação, persistem no roster, recebem arma inicial compatível, alteram atributos/ritmo de combate e possuem um poder ativo em Q / botão mobile. Especializações ainda não são selecionáveis e a arte segurando cada família de arma continua sendo uma próxima camada visual.
+
+## Validação
+
+A branch deve continuar passando importação e testes Godot, export Web e validação do navegador/mobile antes de qualquer publicação.

@@ -1,3 +1,6 @@
 .godot/
 *.tmp
 .DS_Store
+build/
+qa/
+node_modules/

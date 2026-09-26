@@ -2,7 +2,7 @@ name: Build and Deploy Aervalon Web
 
 on:
   push:
-    branches: [main]
+    branches: [main, visual-rebuild-v2]
   workflow_dispatch:
 
 permissions:
@@ -24,13 +24,50 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Export Godot project
-        uses: firebelley/godot-export@v6.0.0
+      - name: Install pinned Godot and Web templates
+        shell: bash
+        run: |
+          curl -fL --retry 3 -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          sudo install /tmp/godot/Godot_v4.5.1-stable_linux.x86_64 /usr/local/bin/godot
+          curl -fL --retry 3 -o /tmp/templates.tpz https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.5.1.stable"
+          unzip -j -q /tmp/templates.tpz 'templates/web*' 'templates/version.txt' -d "$HOME/.local/share/godot/export_templates/4.5.1.stable"
+
+      - name: Import, test gameplay and export
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path . --editor --import 2>&1 | tee /tmp/import.log
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/import.log; then exit 1; fi
+          godot --headless --path . --script tests/slice_test.gd -- --test 2>&1 | tee /tmp/tests.log
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/tests.log; then exit 1; fi
+          mkdir -p build/web
+          godot --headless --path . --export-release Web build/web/index.html 2>&1 | tee /tmp/export.log
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/export.log; then exit 1; fi
+
+      - name: Install browser test dependencies
+        run: |
+          npm install --prefix tests/browser
+          cd tests/browser
+          npx playwright install --with-deps chromium
+
+      - name: Verify WebGL build and mobile controls
+        run: node tests/browser/smoke.cjs
+
+      - name: Save browser verification captures
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
-          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip
-          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.5.1-stable/Godot_v4.5.1-stable_export_templates.tpz
-          relative_project_path: ./
-          archive_output: false
+          name: aervalon-browser-qa
+          path: qa/
+
+      - name: Save tested Web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: aervalon-web-${{ github.sha }}
+          path: build/web/
+          retention-days: 14
 
       - name: Preserve existing published builds
         env:
@@ -54,7 +91,7 @@ jobs:
           BUILD_DIR="build-${GITHUB_RUN_NUMBER}-${SHORT_SHA}"
           echo "build_dir=$BUILD_DIR" >> "$GITHUB_OUTPUT"
           mkdir -p "public/$BUILD_DIR"
-          cp -r "$HOME/.local/share/godot/builds/Web/." "public/$BUILD_DIR/"
+          cp -r "build/web/." "public/$BUILD_DIR/"
           touch "public/$BUILD_DIR/.nojekyll"
           test -f "public/$BUILD_DIR/index.html"
           test -f "public/$BUILD_DIR/index.pck"
@@ -131,6 +168,7 @@ jobs:
           retention-days: 14
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

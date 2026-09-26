@@ -70,6 +70,16 @@ func _ready():
 	var tomas = spawn_npc("Tomás, carregador","tomas",Vector2(240,530),0)
 	tomas.route.assign([Vector2(240,760),Vector2(270,815),Vector2(270,530)])
 	tomas.role = "Nilo está esperando estes sacos. Um dia ainda compro uma carroça para as entregas."
+	# The eastern extension is lived-in, not just extra empty ground.
+	var iria = spawn_npc("Iria, agricultora","lia",Vector2(2230,690),0)
+	iria.route.assign([Vector2(2190,690),Vector2(2240,520),Vector2(2420,520),Vector2(2450,700),Vector2(2230,690)])
+	iria.role = "A colheita segue mesmo com os lobos na mata. A estrada para a vila precisa continuar aberta."
+	var bento = spawn_npc("Bento, carreteiro","tomas",Vector2(2580,760),0)
+	bento.route.assign([Vector2(2460,760),Vector2(2660,760),Vector2(2700,625),Vector2(2500,610)])
+	bento.role = "Levo mantimentos entre as propriedades e Eryndor. Quando a rota acalma, todo mundo sente no preço."
+	for entry in [[Vector2(2160,820),[Vector2(2160,820),Vector2(2250,840),Vector2(2220,900)]],[Vector2(2410,1180),[Vector2(2410,1180),Vector2(2510,1210),Vector2(2580,1160)]],[Vector2(2730,800),[Vector2(2730,800),Vector2(2800,850),Vector2(2740,910)]]]:
+		var farm_hen = spawn_npc("Galinha","hen",entry[0],0)
+		farm_hen.route.assign(entry[1])
 	for point in [Vector2(1250,570),Vector2(1450,655),Vector2(1640,530)]:
 		var wolf = WOLF.instantiate()
 		wolf.position = point
@@ -128,7 +138,7 @@ func _process(delta):
 		qa_clock += delta
 		if qa_clock>0.1:
 			qa_clock = 0
-			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"profile":rpg.profile_id,"scene":"eryndor","world_loaded":true,"race":rpg.race,"class":rpg.class_id,"visual_race":player.visual.hero_race,"power_cooldown":player.power_cooldown,"menu":false,"character_name":Roster.profiles.get(rpg.profile_id,{}).get("name",""),"buttons":hud.inventory_panel.qa_buttons()}
+			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"profile":rpg.profile_id,"scene":"eryndor","world_loaded":true,"race":rpg.race,"class":rpg.class_id,"visual_race":player.visual.hero_race,"power_cooldown":player.power_cooldown,"world_extent":[2920,1450],"menu":false,"character_name":Roster.profiles.get(rpg.profile_id,{}).get("name",""),"buttons":hud.inventory_panel.qa_buttons()}
 			JavaScriptBridge.eval("document.querySelector('canvas').dataset.aervalon="+JSON.stringify(JSON.stringify(state)), true)
 func interact_nearby():
 	if player.death_time>0 or modal_open: return

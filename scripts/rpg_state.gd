@@ -25,6 +25,7 @@ var herbalism := 0
 var harvested := {}
 var discoveries := {}
 var profile_id := ""
+var race := "valen" # Identity belongs to the roster, not the gameplay snapshot.
 var save_enabled := true
 var save_path := "user://eryndor_rpg_v1.json"
 func xp_needed() -> int: return 60 + (level-1)*35

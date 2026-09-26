@@ -2,6 +2,7 @@ extends AnimatedSprite2D
 # Art adapter: gameplay only sets state and direction, never frame numbers.
 const ROOT = "res://assets/aervalon/v2/"
 var hero_sheet := "res://assets/aervalon/characters_v3/valen_linen.png"
+var hero_race := "valen"
 var kind := "hero"
 var state := "idle"
 var direction := Vector2.DOWN
@@ -15,9 +16,11 @@ func setup(actor_kind: String):
 		for row in 4:
 			for action in ["idle", "walk", "attack", "hit", "death"]:
 				var frames: Array = {"idle":[0],"walk":[1,2,3,2],"attack":[4,5],"hit":[6],"death":[7]}[action]
-				_add(action + str(row), sheet, frames, cell, row, 9.0)
-		scale = Vector2.ONE * (87.04/cell.x)
-		position.y = -35
+				var source_row = 3-row if hero_race=="kharum" and row in [1,2] else row
+				_add(action + str(row), sheet, frames, cell, source_row, 9.0)
+		var body_size=preload("res://scripts/races.gd").ALL[hero_race].size
+		scale = Vector2.ONE * (87.04*body_size/cell.x)
+		position.y = (-35 if hero_race=="valen" else -40)*body_size
 	elif kind == "wolf":
 		for row in 2:
 			var sheet = load(ROOT + ("wolf_down.png" if row == 0 else "wolf_up.png"))
@@ -75,6 +78,7 @@ func flash():
 	create_tween().tween_property(self,"modulate",Color.WHITE,0.2)
 
 static func sheet_for(rpg) -> String:
+	if rpg.race!="valen": return "res://assets/aervalon/races_v4/"+rpg.race+".png"
 	match rpg.equipment.armor:
 		"iron_armor": return "res://assets/aervalon/v2/hero.png"
 		"leather_armor": return "res://assets/aervalon/characters_v3/valen_leather.png"
@@ -87,6 +91,7 @@ static func portrait_for(rpg) -> AtlasTexture:
 	return atlas
 func apply_equipment(rpg):
 	var path=sheet_for(rpg)
-	if hero_sheet==path and sprite_frames!=null: return
+	if hero_sheet==path and hero_race==rpg.race and sprite_frames!=null: return
+	hero_race=rpg.race
 	hero_sheet=path
 	setup("hero")

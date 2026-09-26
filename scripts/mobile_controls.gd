@@ -14,7 +14,6 @@ var portrait_warning: Panel
 var coins: Label
 var joystick: Control
 var minimap: Control
-var character_menu
 var inventory_panel
 var inventory_button: Button
 var level_label: Label
@@ -73,11 +72,7 @@ func _ready():
 	inventory_panel = PanelContainer.new()
 	inventory_panel.set_script(preload("res://scripts/inventory_panel.gd"))
 	root.add_child(inventory_panel)
-	character_menu = PanelContainer.new()
-	character_menu.set_script(preload("res://scripts/character_menu.gd"))
-	root.add_child(character_menu)
 	inventory_panel.minimum_size_changed.connect(func(): layout.call_deferred())
-	character_menu.minimum_size_changed.connect(func(): layout.call_deferred())
 	get_viewport().size_changed.connect(layout)
 	layout()
 func box(color: Color, radius: int) -> StyleBoxFlat:
@@ -133,12 +128,9 @@ func layout():
 	inventory_panel.scale = Vector2.ONE*ui_scale
 	inventory_panel.size = Vector2(minf(930,(size.x-64)/ui_scale),minf(500,(size.y-64)/ui_scale))
 	inventory_panel.position = (size-inventory_panel.size*ui_scale)*0.5
-	character_menu.scale = Vector2.ONE*ui_scale
-	character_menu.size = Vector2(minf(1080,(size.x-64)/ui_scale),minf(580,(size.y-40)/ui_scale))
-	character_menu.position = (size-character_menu.size*ui_scale)*0.5
 	joystick.queue_redraw()
 func open_inventory(shop_id := ""):
-	if world.player.death_time>0 or character_menu.visible: return
+	if world.player.death_time>0: return
 	inventory_panel.open(shop_id)
 func refresh():
 	health.max_value = world.player.max_health
@@ -158,7 +150,6 @@ func refresh():
 	attack_button.modulate = Color(0.7,0.7,0.7) if world.player.attack_cooldown>0 else Color.WHITE
 	minimap.queue_redraw()
 func _input(event):
-	if is_instance_valid(character_menu) and character_menu.visible: return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.physical_keycode==KEY_ESCAPE and world.modal_open: inventory_panel.close()
 		elif event.physical_keycode==KEY_I:

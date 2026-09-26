@@ -34,11 +34,11 @@ func _ready():
 	characters.pressed.connect(func():
 		if world.persist():
 			Roster.in_game=false
-			get_tree().change_scene_to_file("res://scenes/world/eryndor.tscn"))
+			get_tree().change_scene_to_file("res://scenes/ui/title_screen.tscn"))
 	right.add_child(characters)
 func refresh():
 	var r=world.rpg
 	portrait.texture=preload("res://scripts/actor_visual.gd").portrait_for(r)
-	identity.text="%s\nValen • Guardião" % Roster.profiles.get(r.profile_id,{}).get("name","Viajante")
+	identity.text="%s\n%s • Guardião" % [Roster.profiles.get(r.profile_id,{}).get("name","Viajante"),preload("res://scripts/races.gd").ALL[r.race].name]
 	slots.text="Arma: %s\nArmadura: %s" % [r.ITEMS.get(r.equipment.weapon,{"name":"Nenhuma"}).name,r.ITEMS.get(r.equipment.armor,{"name":"Roupa de linho"}).name]
 	remove_armor.disabled=r.equipment.armor==""

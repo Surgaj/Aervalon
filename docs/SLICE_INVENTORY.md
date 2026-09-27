@@ -1,37 +1,30 @@
-# Inventário técnico — continuação da Bíblia V0.1
+# Inventário técnico — Aervalon
 
-Base inspecionada: `fa46fdee`, branch `visual-rebuild-v2`, PR #2.
-Não houve reinício nem troca dos assets raster aprovados.
+Base desta continuação: `fd7f5612`, branch `visual-rebuild-v2`, PR #2.
+Preservados mapa raster, sprites separados, Y-sort, colisões e saves.
 
-| Pilar do vertical slice | Estado na base | Arquitetura / próxima lacuna |
+| Sistema | Implementado | Próxima lacuna |
 | --- | --- | --- |
-| Movimento, ponte, colisões e profundidade | Funcional | CharacterBody2D, mundo com Y-sort e bases físicas; testes reais de movimento |
-| Exploração | Área única, baú, floresta | Faltam descobertas além do tesouro |
-| Combate | Direção, alcance, cooldown, dano, reação, IA de lobos | Falta esquiva e padrões de boss |
-| NPCs e missão | Mara aceita/conclui; Borin trabalha; Nilo vende | Rotinas limitadas; sem sistema de horários |
-| XP e nível | Funcional | Dados em `rpg_state.gd`; aumentos moderados |
-| Loot | Sacos no chão; coleta próxima com teste de parede | Pele, presa e moedas |
-| Inventário e equipamento | Funcional, mobile, arma/armadura | Não há todos os slots futuros nem troca visual da roupa |
-| Comércio | Duas lojas, compra/venda e atributos reais | Sem economia regional ou crafting |
-| Morte/respawn | Funcional, sem apagar progresso | Lobos também reaparecem |
-| Persistência | JSON versionado / localStorage na Web | Adicionar campos opcionais, manter saves V1 |
-| Coleta do mundo | Ausente | Primeira lacuna: plantas, recuperação e prática de herbalismo |
-| Dungeon / boss | Ausentes | Precisam de cenário separado e padrões; não simular conclusão com decoração |
-| Começo de The Below | Apenas rumor provisório | Primeira descoberta ambiental, sem revelar respostas |
-| Web/mobile | Export Godot + Playwright | Validado em Chromium emulado; iPhone físico ainda necessário |
+| Mundo | Eryndor, ponte, floresta e arredores de Elden (2920×1450); moradores em rotas e animais | Regiões raciais e conteúdo regional mais profundo |
+| Personagens | Tela inicial independente; sete raças; dez classes; oito perfis; exclusão confirmada; migração de saves | Personalização, prólogos raciais e arte das armas nas mãos |
+| Combate | Ataque, esquiva, poderes iniciais, cooldown, dano, colisões, morte/respawn, lobos | Boss com padrões; pets; especializações |
+| Progressão | XP, nível, drops físicos, moedas e missão de Mara | Mais histórias regionais e recompensas especiais |
+| Equipamento | Inventário, arma/armadura, atributos reais; roupas Valen em linho/couro/ferro | Aparências de equipamento para as outras raças |
+| Comércio | Borin e Nilo, compra/venda; proteção contra compra sem saldo | Economia regional e crafting |
+| Exploração | Plantas, cura, venda, prática de herbalismo e regrowth; descoberta no poço | Dungeon e entrada jogável de The Below |
+| Persistência | Saves individuais locais; inventário, equipamento, progressão, descobertas | Nenhuma infraestrutura multiplayer nesta fase |
+| Web/mobile | Godot Web e Chromium com controles reais; preview imutável | Validação em iPhone físico |
 
-## Incremento escolhido
+## Incremento: identidade das armas
 
-1. Esquiva curta com cooldown, colisão preservada e janela de proteção pequena.
-2. Coleta contextual de plantas, item utilizável/vendável, prática de herbalismo
-   e regeneração persistente dos pontos. Nada de menu de profissão gigantesco.
-3. Descoberta no poço existente: um eco sob Eryndor, reação visível e memória
-   persistente. Pista, não entrada jogável ou explicação da civilização antiga.
-4. Testes de regressão, controles de toque, save antigo e export Web.
+- Flechas, energia arcana e tiros são Sprite2D independentes em movimento.
+- A arma equipada define o tipo de projétil e o alcance. Espadas continuam corpo a corpo.
+- Colisão varrida impede atravessar paredes; cada disparo atinge um inimigo e termina.
+- Menus pausam projéteis; morte os remove; tiros perdidos expiram.
+- Assistência de mira limitada ao cone frontal e a alvos visíveis.
+- Cada classe encontra melhoria compatível na ferraria; ícones distinguem as famílias.
+- Não foram substituídos sprites do mundo nem simulada uma dungeon com decoração.
 
-## Próxima etapa após este incremento
-
-Pequena dungeon com entrada no mundo, saída segura, arena legível e boss de
-padrões aprendíveis, construída com assets separados de qualidade equivalente.
-Depois: som, animações específicas e consequência visual regional. Criação de
-raças/classes, continente, crafting amplo e multiplayer continuam futuros.
+Limite visual: a animação corporal de ataque ainda utiliza as folhas atuais; armas nas
+mãos, pets, especializações e efeitos raros/míticos próprios exigem uma próxima etapa.
+Os ícones e pequenos projéteis SVG foram desenhados em código; não usam arte externa.

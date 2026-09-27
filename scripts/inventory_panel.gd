@@ -140,7 +140,7 @@ func refresh():
 	for child in grid.get_children():
 		grid.remove_child(child)
 		child.queue_free()
-	var ids = r.SHOPS.get(shop,[]) if mode=="Comprar" else r.inventory.keys()
+	var ids = r.shop_stock(shop) if mode=="Comprar" else r.inventory.keys()
 	for id in ids:
 		var item = r.ITEMS[id]
 		if category!="Todos" and item.type!=category: continue

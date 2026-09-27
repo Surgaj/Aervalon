@@ -5,15 +5,22 @@ const ITEMS = {
 	"river_herb": {"name":"Erva de Orvalho", "type":"Consumíveis", "heal":15, "price":0, "value":2, "icon":"herb", "description":"Colhida no vale. Recupera 15 de vida."},
 	"rusty_sword": {"name":"Espada Enferrujada", "type":"Equipamentos", "slot":"weapon", "family":"blade", "attack":5, "price":8, "value":3, "icon":"sword", "description":"Uma lâmina gasta. Ataque +5."},
 	"iron_sword": {"name":"Espada de Ferro", "type":"Equipamentos", "slot":"weapon", "family":"blade", "attack":18, "price":38, "value":15, "icon":"sword", "description":"Forjada por Borin. Ataque +18."},
-	"shadow_daggers": {"name":"Lâminas Gêmeas", "type":"Equipamentos", "slot":"weapon", "family":"dagger", "attack":4, "price":0, "value":1, "icon":"sword", "description":"Duas lâminas leves de iniciado. Feitas para golpes rápidos."},
-	"tracker_bow": {"name":"Arco de Rastreador", "type":"Equipamentos", "slot":"weapon", "family":"bow", "attack":4, "price":0, "value":1, "icon":"sword", "description":"Arco simples de viagem, próprio para manter distância."},
-	"arcanist_staff": {"name":"Báculo de Cinza", "type":"Equipamentos", "slot":"weapon", "family":"staff", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Canaliza a primeira disciplina de um Arcanista."},
-	"luminar_mace": {"name":"Maça do Alvorecer", "type":"Equipamentos", "slot":"weapon", "family":"mace", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Arma de peregrino usada pelos Luminares."},
-	"bound_spear": {"name":"Lança Vinculada", "type":"Equipamentos", "slot":"weapon", "family":"spear", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Lança ritual marcada para um vínculo espiritual."},
-	"veil_scythe": {"name":"Foice Velária", "type":"Equipamentos", "slot":"weapon", "family":"scythe", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Foice curta usada para conduzir ecos vitais."},
-	"artificer_pistol": {"name":"Pistola de Oficina", "type":"Equipamentos", "slot":"weapon", "family":"firearm", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Mecanismo robusto de um Artífice iniciante."},
-	"storm_spear": {"name":"Lança da Tempestade", "type":"Equipamentos", "slot":"weapon", "family":"spear", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Haste condutora usada pelos Tempestários."},
+	"shadow_daggers": {"name":"Lâminas Gêmeas", "type":"Equipamentos", "slot":"weapon", "family":"dagger", "attack":4, "price":0, "value":1, "icon":"dagger", "description":"Duas lâminas leves de iniciado. Feitas para golpes rápidos."},
+	"tracker_bow": {"name":"Arco de Rastreador", "type":"Equipamentos", "slot":"weapon", "family":"bow", "attack":4, "price":0, "value":1, "icon":"bow", "description":"Arco simples de viagem, próprio para manter distância."},
+	"arcanist_staff": {"name":"Báculo de Cinza", "type":"Equipamentos", "slot":"weapon", "family":"staff", "attack":5, "price":0, "value":1, "icon":"staff", "description":"Canaliza a primeira disciplina de um Arcanista."},
+	"luminar_mace": {"name":"Maça do Alvorecer", "type":"Equipamentos", "slot":"weapon", "family":"mace", "attack":5, "price":0, "value":1, "icon":"mace", "description":"Arma de peregrino usada pelos Luminares."},
+	"bound_spear": {"name":"Lança Vinculada", "type":"Equipamentos", "slot":"weapon", "family":"spear", "attack":5, "price":0, "value":1, "icon":"spear", "description":"Lança ritual marcada para um vínculo espiritual."},
+	"veil_scythe": {"name":"Foice Velária", "type":"Equipamentos", "slot":"weapon", "family":"scythe", "attack":5, "price":0, "value":1, "icon":"scythe", "description":"Foice curta usada para conduzir ecos vitais."},
+	"artificer_pistol": {"name":"Pistola de Oficina", "type":"Equipamentos", "slot":"weapon", "family":"firearm", "attack":5, "price":0, "value":1, "icon":"pistol", "description":"Mecanismo robusto de um Artífice iniciante."},
+	"storm_spear": {"name":"Lança da Tempestade", "type":"Equipamentos", "slot":"weapon", "family":"spear", "attack":5, "price":0, "value":1, "icon":"spear", "description":"Haste condutora usada pelos Tempestários."},
 	"echo_blade": {"name":"Lâmina de Eco", "type":"Equipamentos", "slot":"weapon", "family":"blade", "attack":5, "price":0, "value":1, "icon":"sword", "description":"Lâmina equilibrada para técnicas de ruptura e memória."},
+	"steel_daggers": {"name":"Adagas de Aço", "type":"Equipamentos", "slot":"weapon", "family":"dagger", "attack":18, "price":38, "value":15, "icon":"dagger", "description":"Ajustada na oficina de Borin. Ataque +18."},
+	"reinforced_bow": {"name":"Arco Reforçado", "type":"Equipamentos", "slot":"weapon", "family":"bow", "attack":18, "price":38, "value":15, "icon":"bow", "description":"Ajustada na oficina de Borin. Ataque +18."},
+	"crystal_staff": {"name":"Báculo de Cristal", "type":"Equipamentos", "slot":"weapon", "family":"staff", "attack":18, "price":38, "value":15, "icon":"staff", "description":"Ajustada na oficina de Borin. Ataque +18."},
+	"forged_mace": {"name":"Maça Forjada", "type":"Equipamentos", "slot":"weapon", "family":"mace", "attack":18, "price":38, "value":15, "icon":"mace", "description":"Ajustada na oficina de Borin. Ataque +18."},
+	"balanced_spear": {"name":"Lança Equilibrada", "type":"Equipamentos", "slot":"weapon", "family":"spear", "attack":18, "price":38, "value":15, "icon":"spear", "description":"Ajustada na oficina de Borin. Ataque +18."},
+	"tempered_scythe": {"name":"Foice Temperada", "type":"Equipamentos", "slot":"weapon", "family":"scythe", "attack":18, "price":38, "value":15, "icon":"scythe", "description":"Ajustada na oficina de Borin. Ataque +18."},
+	"calibrated_pistol": {"name":"Pistola Calibrada", "type":"Equipamentos", "slot":"weapon", "family":"firearm", "attack":18, "price":38, "value":15, "icon":"pistol", "description":"Ajustada na oficina de Borin. Ataque +18."},
 	"iron_armor": {"name":"Armadura de Ferro", "type":"Equipamentos", "slot":"armor", "defense":5, "price":55, "value":22, "icon":"armor", "description":"Placas e capa de viagem. Defesa +5."},
 	"leather_armor": {"name":"Armadura Simples", "type":"Equipamentos", "slot":"armor", "defense":3, "price":24, "value":9, "icon":"armor", "description":"Couro reforçado. Defesa +3."},
 	"potion": {"name":"Poção de Vida", "type":"Consumíveis", "heal":45, "price":8, "value":3, "icon":"potion", "description":"Recupera 45 pontos de vida."},
@@ -22,7 +29,7 @@ const ITEMS = {
 	"wolf_fang": {"name":"Presa de Lobo", "type":"Materiais", "price":0, "value":3, "icon":"fang", "description":"Uma presa afiada encontrada na floresta."},
 	"mara_token": {"name":"Selo de Eryndor", "type":"Itens de missão", "price":0, "value":0, "icon":"seal", "description":"Mara agradece por tornar a estrada segura."}
 }
-const SHOPS = {"borin":["iron_sword","leather_armor","iron_armor"], "merchant":["potion","bread"]}
+const SHOPS = {"borin":["iron_sword","leather_armor","iron_armor","steel_daggers","reinforced_bow","crystal_staff","forged_mace","balanced_spear","tempered_scythe","calibrated_pistol"], "merchant":["potion","bread"]}
 var level := 1
 var xp := 0
 var coins := 12
@@ -46,7 +53,16 @@ func defense() -> int: return int(ITEMS.get(equipment.armor,{}).get("defense",0)
 func max_health() -> int: return maxi(60,100+(level-1)*8+int(class_data().health_bonus))
 func move_speed() -> float: return float(class_data().speed)
 func attack_cooldown_value() -> float: return float(class_data().attack_cooldown)
-func attack_range() -> float: return float(class_data().attack_range)
+func projectile_data() -> Dictionary:
+	var family = str(ITEMS.get(equipment.weapon,{}).get("family",""))
+	return {"bow":{"kind":"arrow","speed":370.0,"range":285.0},"crossbow":{"kind":"arrow","speed":420.0,"range":285.0},"staff":{"kind":"arcane","speed":310.0,"range":260.0},"wand":{"kind":"arcane","speed":350.0,"range":260.0},"firearm":{"kind":"bullet","speed":520.0,"range":300.0}}.get(family,{})
+func attack_range() -> float:
+	return float(projectile_data().get("range",class_data().attack_range))
+func shop_stock(shop: String) -> Array:
+	var stock: Array = []
+	for id in SHOPS.get(shop,[]):
+		if ITEMS[id].get("slot","")!="weapon" or can_equip(id): stock.append(id)
+	return stock
 func class_power_cooldown() -> float: return float(class_data().power_cooldown)
 func configure_new_character(id: String):
 	class_id = id if CLASSES.has(id) else "guardian"

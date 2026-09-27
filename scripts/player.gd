@@ -91,6 +91,26 @@ func dodge():
 	attack_time = 0
 	strike_done = true
 func _strike():
+	var world = get_tree().current_scene
+	if death_time>0 or world.modal_open: return
+	var projectile_data = world.rpg.projectile_data()
+	if not projectile_data.is_empty():
+		var shot = preload("res://scripts/projectile.gd").new()
+		shot.position = global_position
+		shot.direction = facing.normalized()
+		# Small forward aim assistance: no shots behind the player or through walls.
+		var best = float(projectile_data.range)
+		for enemy in get_tree().get_nodes_in_group("enemy"):
+			var offset = enemy.global_position-global_position
+			if enemy.health>0 and offset.length()<best and facing.dot(offset.normalized())>0.85 and world.clear_shot(enemy):
+				best = offset.length()
+				shot.direction = offset.normalized()
+		shot.kind = projectile_data.kind
+		shot.speed = projectile_data.speed
+		shot.remaining = projectile_data.range
+		shot.damage = world.rpg.attack()
+		world.get_node("YSortWorld").add_child(shot)
+		return
 	get_tree().current_scene.slash(global_position,facing)
 	for enemy in get_tree().get_nodes_in_group("enemy"):
 		var offset: Vector2 = enemy.global_position-global_position

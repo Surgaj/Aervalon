@@ -3,7 +3,10 @@ config_version=5
 
 [application]
 config/name="Aervalon"
-run/main_scene="res://scenes/world/eryndor.tscn"
+run/main_scene="res://scenes/ui/title_screen.tscn"
+
+[autoload]
+Roster="*res://scripts/character_roster.gd"
 
 [display]
 window/size/viewport_width=1280
@@ -11,6 +14,7 @@ window/size/viewport_height=720
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 
 [rendering]
 renderer/rendering_method="gl_compatibility"

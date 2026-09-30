@@ -62,6 +62,7 @@ func run():
 		await process_frame
 		var power=world.hud.power_button
 		check(power.size==Vector2(86,86) and not power.get_global_rect().intersects(world.hud.dodge_button.get_global_rect()),id+" power remains a fixed-size non-overlapping mobile button")
+	check(not world.hud.interaction_hint.get_global_rect().intersects(world.hud.power_button.get_global_rect()),"Contextual interaction label stays clear of the power button")
 	check(world.hud.xp_label.get_parent()==world.hud.health.get_parent() and world.hud.xp_bar.max_value==world.rpg.xp_needed(),"XP bar and label stay inside the status panel")
 	print("POLISH TEST COMPLETE: ",failures," failure(s)")
 	quit(1 if failures else 0)

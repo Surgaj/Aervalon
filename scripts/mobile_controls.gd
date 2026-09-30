@@ -47,6 +47,7 @@ func _ready():
 	xp_bar.position = Vector2(16,70)
 	xp_bar.size = Vector2(248,5)
 	xp_bar.show_percentage = false
+	xp_bar.add_theme_font_size_override("font_size",1)
 	xp_bar.add_theme_stylebox_override("background",box(Color("182533"),2))
 	xp_bar.add_theme_stylebox_override("fill",box(Color("719ec6"),2))
 	status.add_child(xp_bar)
@@ -79,6 +80,9 @@ func _ready():
 	message_body.size = Vector2(534,76)
 	message_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	interaction_hint = label(root,"",Vector2.ZERO,17,Color("f0d18c"))
+	interaction_hint.size = Vector2(290,28)
+	interaction_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	interaction_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	minimap = Control.new()
 	minimap.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(minimap)
@@ -139,7 +143,7 @@ func layout():
 	power_button.position = size-Vector2(252,225)
 	dodge_button.position = size-Vector2(140,263)
 	message_panel.position = Vector2((size.x-570)*0.5,size.y-155)
-	interaction_hint.position = Vector2(size.x-380,size.y-195)
+	interaction_hint.position = Vector2(size.x-330,size.y-306)
 	minimap.position = Vector2(size.x-184,24)
 	portrait_warning.position = size*0.5-Vector2(190,47)
 	portrait_warning.visible = size.y>size.x

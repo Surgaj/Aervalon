@@ -1,4 +1,5 @@
 extends CharacterBody2D
+@export var interaction_id := ""
 @export var npc_name := "Morador"
 @export var role := "A vida continua em Eryndor."
 @export var appearance := "mara"

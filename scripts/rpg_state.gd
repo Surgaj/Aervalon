@@ -39,6 +39,7 @@ var quest := "available"
 var kills := 0
 var chest_open := false
 var herbalism := 0
+var harvest_quest := "available"
 var harvested := {}
 var discoveries := {}
 var profile_id := ""
@@ -107,7 +108,7 @@ func equip(id: String) -> bool:
 	equipment[ITEMS[id].slot] = id
 	return true
 func snapshot() -> Dictionary:
-	return {"version":1,"level":level,"xp":xp,"coins":coins,"inventory":inventory.duplicate(),"equipment":equipment.duplicate(),"quest":quest,"kills":kills,"chest_open":chest_open,"herbalism":herbalism,"harvested":harvested.duplicate(),"discoveries":discoveries.duplicate()}
+	return {"version":1,"level":level,"xp":xp,"coins":coins,"inventory":inventory.duplicate(),"equipment":equipment.duplicate(),"quest":quest,"kills":kills,"chest_open":chest_open,"herbalism":herbalism,"harvest_quest":harvest_quest,"harvested":harvested.duplicate(),"discoveries":discoveries.duplicate()}
 func restore(data) -> bool:
 	if not data is Dictionary or data.get("version",0)!=1: return false
 	if not data.get("inventory") is Dictionary or not data.get("equipment") is Dictionary: return false
@@ -131,13 +132,15 @@ func restore(data) -> bool:
 	if quest in ["return","complete"]: kills=3
 	if quest=="active" and kills==3: quest="return"
 	chest_open = bool(data.get("chest_open",false))
+	harvest_quest = str(data.get("harvest_quest","available"))
+	if not harvest_quest in ["available","active","complete"]: harvest_quest="available"
 	herbalism = 0
 	if data.get("herbalism",0) is int or data.get("herbalism",0) is float:
 		herbalism = clampi(int(data.get("herbalism",0)),0,9999)
 	harvested.clear()
 	if data.get("harvested",{}) is Dictionary:
 		var now = Time.get_unix_time_from_system()
-		for id in ["herb_village","herb_bank","herb_forest"]:
+		for id in ["herb_village","herb_bank","herb_forest","herb_farm","herb_meadow"]:
 			var stamp = data.get("harvested",{}).get(id,0)
 			if (stamp is float or stamp is int) and is_finite(float(stamp)) and float(stamp)>now:
 				harvested[id] = minf(float(stamp),now+120.0)

@@ -18,6 +18,7 @@ var coins: int:
 var message_time := 0.0
 var qa_enabled := false
 var qa_clock := 0.0
+var farm_worker
 var nearest_npc
 var nearest_object
 func _ready():
@@ -72,6 +73,8 @@ func _ready():
 	tomas.role = "Nilo está esperando estes sacos. Um dia ainda compro uma carroça para as entregas."
 	# The eastern extension is lived-in, not just extra empty ground.
 	var iria = spawn_npc("Iria, agricultora","lia",Vector2(2230,690),0)
+	iria.interaction_id="iria"
+	farm_worker=iria
 	iria.route.assign([Vector2(2190,690),Vector2(2240,520),Vector2(2420,520),Vector2(2450,700),Vector2(2230,690)])
 	iria.role = "A colheita segue mesmo com os lobos na mata. A estrada para a vila precisa continuar aberta."
 	var bento = spawn_npc("Bento, carreteiro","tomas",Vector2(2580,705),0)
@@ -92,7 +95,7 @@ func _ready():
 	chest.scale = Vector2.ONE*0.25
 	$YSortWorld.add_child(chest)
 	if chest_open: chest.modulate = Color(0.5,0.5,0.5)
-	for entry in [["herb_village",Vector2(745,700)],["herb_bank",Vector2(1150,735)],["herb_forest",Vector2(1530,790)],["well_echo",Vector2(695,829)]]:
+	for entry in [["herb_village",Vector2(745,700)],["herb_bank",Vector2(1150,735)],["herb_forest",Vector2(1530,790)],["well_echo",Vector2(695,829)],["herb_farm",Vector2(2375,870)],["herb_meadow",Vector2(2590,1175)]]:
 		var resource = Node2D.new()
 		resource.set_script(preload("res://scripts/world_interaction.gd"))
 		resource.resource_id = entry[0]
@@ -122,7 +125,7 @@ func _process(delta):
 		if npc.appearance == "hen": continue
 		var interact_point = npc.global_position+Vector2(0,80) if npc.appearance=="borin" else npc.global_position
 		var distance = player.global_position.distance_to(interact_point)
-		if npc.appearance in ["lia","tomas"] and distance>42: continue
+		if npc.appearance in ["lia","tomas"] and distance>(80 if npc.interaction_id=="iria" else 42): continue
 		if distance<best:
 			best = distance
 			nearest_npc = npc
@@ -138,7 +141,7 @@ func _process(delta):
 		qa_clock += delta
 		if qa_clock>0.1:
 			qa_clock = 0
-			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"profile":rpg.profile_id,"scene":"eryndor","world_loaded":true,"race":rpg.race,"class":rpg.class_id,"visual_race":player.visual.hero_race,"power_cooldown":player.power_cooldown,"projectiles":get_tree().get_nodes_in_group("projectile").size(),"weapon_range":rpg.attack_range(),"world_extent":[2920,1450],"menu":false,"character_name":Roster.profiles.get(rpg.profile_id,{}).get("name",""),"buttons":hud.inventory_panel.qa_buttons()}
+			var state = {"dodge_cooldown":player.dodge_cooldown,"dodge":[hud.dodge_button.position.x+43,hud.dodge_button.position.y+43],"herbalism":rpg.herbalism,"harvest_quest":rpg.harvest_quest,"iria_position":[farm_worker.position.x,farm_worker.position.y],"nearby_npc":nearest_npc.npc_name if nearest_npc else "","power_label":hud.power_caption.text,"discoveries":rpg.discoveries,"interaction":nearest_object.resource_id if nearest_object else "","position":[player.position.x,player.position.y],"health":player.health,"quest_started":quest_started,"kills":quest_kills,"complete":quest_complete,"viewport":[hud.root.size.x,hud.root.size.y],"joystick":[hud.joy_center.x,hud.joy_center.y],"attack":[hud.attack_button.position.x+54,hud.attack_button.position.y+54],"portrait":hud.portrait_warning.visible,"modal":modal_open,"level":rpg.level,"xp":rpg.xp,"coins":coins,"equipment":rpg.equipment,"inventory":rpg.inventory,"shop":shop,"profile":rpg.profile_id,"scene":"eryndor","world_loaded":true,"race":rpg.race,"class":rpg.class_id,"visual_race":player.visual.hero_race,"power_cooldown":player.power_cooldown,"projectiles":get_tree().get_nodes_in_group("projectile").size(),"weapon_range":rpg.attack_range(),"world_extent":[2920,1450],"menu":false,"character_name":Roster.profiles.get(rpg.profile_id,{}).get("name",""),"buttons":hud.inventory_panel.qa_buttons()}
 			JavaScriptBridge.eval("document.querySelector('canvas').dataset.aervalon="+JSON.stringify(JSON.stringify(state)), true)
 func interact_nearby():
 	if player.death_time>0 or modal_open: return
@@ -156,6 +159,23 @@ func interact_nearby():
 		else: show_message("Baú vazio","Você já recolheu este tesouro.")
 	else: show_message("Explore Eryndor","Aproxime-se de um morador ou procure algo entre as árvores.")
 func npc_dialogue(npc):
+	if npc.interaction_id=="iria":
+		if rpg.harvest_quest=="available":
+			rpg.harvest_quest="active"
+			show_message("Iria • Remédio da Colheita","As mãos do pessoal estão feridas. Traga 3 Ervas de Orvalho; há plantas junto às trilhas. Dou 12 moedas e 2 poções pela ajuda.")
+		elif rpg.harvest_quest=="complete":
+			show_message("Iria","As compressas já ajudaram o pessoal. Obrigada! As ervas voltam a crescer; deixe as raízes no chão.")
+		elif int(rpg.inventory.get("river_herb",0))>=3:
+			for i in 3: rpg.remove_item("river_herb")
+			rpg.harvest_quest="complete"
+			rpg.coins+=12
+			rpg.add_item("potion",2)
+			grant_xp(25)
+			show_message("Remédio da Colheita • concluída","Iria: Vou preparar as compressas. +12 moedas • +2 poções • +25 XP.")
+		else:
+			show_message("Iria • Ervas de Orvalho","Você trouxe %d de 3 ervas. Siga as trilhas ao sul; as folhas brilham quando você se aproxima." % int(rpg.inventory.get("river_herb",0)))
+		persist()
+		return
 	match npc.appearance:
 		"mara":
 			if quest_complete:
@@ -347,6 +367,10 @@ func use_item(id: String) -> String:
 		return "Vida recuperada"
 	return "Este item não pode ser usado"
 func quest_text() -> String:
+	if player.position.x>1900:
+		if rpg.harvest_quest=="active":
+			return "REMÉDIO DA COLHEITA\n"+("Volte e fale com Iria" if int(rpg.inventory.get("river_herb",0))>=3 else "Ervas de Orvalho  %d / 3" % int(rpg.inventory.get("river_herb",0)))
+		if rpg.harvest_quest=="available": return "ARREDORES DE ELDEN\nConverse com Iria na estrada"
 	if quest_complete: return "ESTRADA SEGURA\nConcluída • Explore o vale"
 	if quest_kills>=quest_target: return "ESTRADA SEGURA\nVolte à vila • Fale com Mara"
 	if quest_started: return "AMEAÇA NA MATA\nLobos derrotados  %d / 3" % quest_kills

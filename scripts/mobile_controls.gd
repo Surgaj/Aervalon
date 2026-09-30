@@ -9,6 +9,10 @@ var message_title: Label
 var message_body: Label
 var dodge_button: Button
 var power_button: Button
+var power_caption: Label
+var xp_bar: ProgressBar
+var attack_icon_id := "sword"
+var power_name := ""
 var attack_button: Button
 var interact_button: Button
 var portrait_warning: Panel
@@ -29,7 +33,7 @@ func _ready():
 	root = Control.new()
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
-	var status = panel(Vector2(22,20),Vector2(280,82))
+	var status = panel(Vector2(22,20),Vector2(280,104))
 	level_label = label(status,"AERVALON  /  Nv. 1",Vector2(16,9),18,Color(0.95,0.85,0.59))
 	health = ProgressBar.new()
 	health.position = Vector2(16,39)
@@ -39,10 +43,17 @@ func _ready():
 	health.add_theme_stylebox_override("fill",box(Color(0.65,0.12,0.12),5))
 	status.add_child(health)
 	health_text = label(status,"100 / 100",Vector2(103,40),16)
-	xp_label = label(root,"",Vector2(26,101),14,Color.LIGHT_SKY_BLUE)
-	var quest_panel = panel(Vector2(22,116),Vector2(295,78))
+	xp_bar = ProgressBar.new()
+	xp_bar.position = Vector2(16,70)
+	xp_bar.size = Vector2(248,5)
+	xp_bar.show_percentage = false
+	xp_bar.add_theme_stylebox_override("background",box(Color("182533"),2))
+	xp_bar.add_theme_stylebox_override("fill",box(Color("719ec6"),2))
+	status.add_child(xp_bar)
+	xp_label = label(status,"",Vector2(16,80),14,Color.LIGHT_SKY_BLUE)
+	var quest_panel = panel(Vector2(22,136),Vector2(295,78))
 	quest = label(quest_panel,"",Vector2(14,10),17,Color(0.96,0.87,0.65))
-	coins = label(root,"",Vector2(26,205),16,Color(0.95,0.82,0.52))
+	coins = label(root,"",Vector2(26,225),16,Color(0.95,0.82,0.52))
 	joystick = Control.new()
 	joystick.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(joystick)
@@ -53,7 +64,12 @@ func _ready():
 	attack_button.button_down.connect(func(): world.player.attack())
 	dodge_button = button("Esquiva",Vector2(86,86),Color(0.13,0.20,0.26))
 	dodge_button.button_down.connect(func(): world.player.dodge())
-	power_button = button("Poder",Vector2(86,86),Color(0.20,0.14,0.28))
+	power_button = button("",Vector2(86,86),Color(0.20,0.14,0.28))
+	power_caption = label(power_button,"Poder",Vector2(7,7),16)
+	power_caption.size = Vector2(72,72)
+	power_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	power_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	power_caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	power_button.button_down.connect(func(): world.player.class_power())
 	interact_button = button("Falar",Vector2(86,86),Color(0.11,0.18,0.17))
 	interact_button.button_down.connect(func(): world.interact_nearby())
@@ -142,6 +158,8 @@ func refresh():
 	health.max_value = world.player.max_health
 	health.value = world.player.health
 	level_label.text = "AERVALON  /  Nv. %d" % world.rpg.level
+	xp_bar.max_value = world.rpg.xp_needed()
+	xp_bar.value = world.rpg.xp
 	xp_label.text = "XP %d / %d" % [world.rpg.xp,world.rpg.xp_needed()]
 	health_text.text = "%d / %d" % [world.player.health,world.player.max_health]
 	quest.text = world.quest_text()
@@ -153,7 +171,20 @@ func refresh():
 	if world.nearest_object: interact_button.text = world.nearest_object.action_text()
 	dodge_button.text = "%.1f" % world.player.dodge_cooldown if world.player.dodge_cooldown>0 else "Esquiva"
 	dodge_button.modulate = Color(0.7,0.7,0.7) if world.player.dodge_cooldown>0 else Color.WHITE
-	power_button.text = "%.1f" % world.player.power_cooldown if world.player.power_cooldown>0 else str(world.rpg.class_data().power)
+	var current_power = str(world.rpg.class_data().power)
+	if current_power!=power_name:
+		power_name=current_power
+		var font=power_caption.get_theme_font("font")
+		var font_size=16
+		var widest=0.0
+		for word in power_name.split(" "): widest=maxf(widest,font.get_string_size(word,HORIZONTAL_ALIGNMENT_LEFT,font_size).x)
+		power_caption.add_theme_font_size_override("font_size",mini(16,maxi(12,floori(16.0*72.0/maxf(1,widest)))))
+	power_caption.text = "%.1f" % world.player.power_cooldown if world.player.power_cooldown>0 else str(world.rpg.class_data().power).replace(" ","\n")
+	power_button.tooltip_text = world.rpg.class_data().power+" — "+world.rpg.class_data().power_desc
+	var icon_id = str(world.rpg.ITEMS.get(world.rpg.equipment.weapon,{}).get("icon","sword"))
+	if icon_id!=attack_icon_id:
+		attack_icon_id=icon_id
+		attack_button.icon=load("res://assets/aervalon/ui/"+icon_id+".svg")
 	power_button.modulate = Color(0.7,0.7,0.7) if world.player.power_cooldown>0 else Color.WHITE
 	attack_button.modulate = Color(0.7,0.7,0.7) if world.player.attack_cooldown>0 else Color.WHITE
 	minimap.queue_redraw()

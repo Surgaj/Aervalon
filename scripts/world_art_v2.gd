@@ -6,15 +6,21 @@ var phase := 0.0
 var yworld: Node2D
 var variation := RandomNumberGenerator.new()
 var terrain: Node2D
+var tree_material: ShaderMaterial
 func _ready():
+	tree_material = ShaderMaterial.new()
+	tree_material.shader = preload("res://scripts/tree_cutout.gdshader")
 	variation.seed = 417
 	yworld = get_parent().get_node("YSortWorld")
 	terrain = get_parent().get_node("Terrain")
 	ground("grass",Rect2(0,0,2920,1450),false,Color(0.58,0.68,0.51))
 	ground("cobble",Rect2(180,260,700,650),true,Color(0.94,0.92,0.84))
 	ground("dirt",Rect2(1025,505,1720,220),true,Color(0.87,0.83,0.72))
-	ground("dirt",Rect2(2070,245,520,235),true,Color(0.78,0.73,0.58))
-	ground("dirt",Rect2(2140,875,540,260),true,Color(0.76,0.70,0.56))
+	ground("dirt",Rect2(2080,365,330,160),true,Color(0.78,0.73,0.58))
+	ground("dirt",Rect2(2340,1010,330,170),true,Color(0.76,0.70,0.56))
+	trail([Vector2(2260,630),Vector2(2275,545),Vector2(2240,480)],100)
+	trail([Vector2(2380,665),Vector2(2330,790),Vector2(2305,940),Vector2(2330,1040),Vector2(2470,1100)],92)
+	trail([Vector2(2460,1110),Vector2(2540,1190),Vector2(2630,1200)],72)
 	var river = ground("water",Rect2(915,0,145,1450),false,Color(0.65,0.9,0.92))
 	var water_shader = Shader.new()
 	water_shader.code = "shader_type canvas_item; varying vec4 tint; varying vec2 local; void vertex(){tint=COLOR;local=VERTEX;} void fragment(){ vec2 uv=UV+vec2(sin(UV.y*26.0+TIME)*0.009,TIME*0.018); float edge=abs(local.x)+12.0*sin(local.y*0.013)+7.0*sin(local.y*0.039); vec4 c=texture(TEXTURE,uv)*tint; c.a*=1.0-smoothstep(249.0,290.0,edge); COLOR=c; }"
@@ -44,12 +50,14 @@ func _ready():
 	prop("supplies",Vector2(2140,525),86,Vector2(52,30))
 	prop("supplies",Vector2(2570,1110),78,Vector2(48,28))
 	prop("market",Vector2(2680,645),180,Vector2(112,48))
-	for point in [Vector2(2010,180),Vector2(2200,145),Vector2(2420,160),Vector2(2660,190),Vector2(2840,330),Vector2(2860,650),Vector2(2800,920),Vector2(2710,1260),Vector2(2460,1320),Vector2(2210,1280),Vector2(2020,1150)]:
-		var width = variation.randf_range(176,226)
-		var tree = prop("tree",point+Vector2(variation.randf_range(-12,12),variation.randf_range(-8,8)),width,Vector2(27,24))
+	# Authored groves: mature trees and saplings, with open paths between clusters.
+	for entry in [[Vector2(2010,180),204],[Vector2(2140,125),174],[Vector2(2220,230),219],[Vector2(2415,150),188],[Vector2(2665,205),225],[Vector2(2840,330),191],[Vector2(2860,650),214],[Vector2(2800,920),181],[Vector2(1995,1090),204],[Vector2(2070,1210),155],[Vector2(2170,1320),224],[Vector2(2360,1255),177],[Vector2(2485,1375),209],[Vector2(2675,1260),163],[Vector2(2780,1185),216]]:
+		var tree = prop("tree",entry[0],float(entry[1]),Vector2(27,24))
 		tree.flip_h = variation.randf()>0.5
-		tree.modulate = Color(variation.randf_range(0.91,1.0),variation.randf_range(0.93,1.0),variation.randf_range(0.89,1.0))
+		tree.modulate = Color(variation.randf_range(0.88,1.0),variation.randf_range(0.92,1.0),variation.randf_range(0.86,1.0))
 		trees.append(tree)
+	for entry in [[Vector2(2285,840),36],[Vector2(2300,878),28],[Vector2(2375,970),42],[Vector2(2335,1150),32],[Vector2(2530,1280),38],[Vector2(2760,1050),33]]:
+		prop("flowers",entry[0],float(entry[1]),Vector2.ZERO)
 	for point in [Vector2(2050,735),Vector2(2200,760),Vector2(2370,735),Vector2(2540,770),Vector2(2730,740),Vector2(2030,1010),Vector2(2320,1190),Vector2(2640,1210)]:
 		var meadow = prop("flowers",point,variation.randf_range(52,86),Vector2(24,12))
 		meadow.flip_h = variation.randf()>0.5
@@ -59,11 +67,6 @@ func _ready():
 	for point in [Vector2(150,270),Vector2(155,600),Vector2(150,940),Vector2(380,980),Vector2(700,1010),Vector2(820,265),Vector2(1110,275),Vector2(1300,330),Vector2(1510,300),Vector2(1730,380),Vector2(1820,600),Vector2(1170,890),Vector2(1390,950),Vector2(1630,870),Vector2(590,205),Vector2(350,160),Vector2(1700,1040),Vector2(1850,950),Vector2(1490,145),Vector2(1220,130)]:
 		var width = variation.randf_range(188,236)
 		var tree = prop("tree",point+Vector2(variation.randf_range(-16,16),variation.randf_range(-10,10)),width,Vector2(27,24))
-		var cutout = Shader.new()
-		cutout.code = "shader_type canvas_item; varying vec4 tint; void vertex(){tint=COLOR;} void fragment(){ vec4 c=texture(TEXTURE,UV)*tint; if(UV.y>0.72 && (UV.x<0.02 || UV.x>0.95)){c.a=0.0;} COLOR=c; }"
-		var tree_mat = ShaderMaterial.new()
-		tree_mat.shader = cutout
-		tree.material = tree_mat
 		tree.flip_h = variation.randf()>0.5
 		tree.modulate = Color(variation.randf_range(0.90,1.0),variation.randf_range(0.92,1.0),variation.randf_range(0.88,1.0))
 		trees.append(tree)
@@ -84,6 +87,14 @@ func _ready():
 	label_at("ERYNDOR",Vector2(535,285),18,Color(0.9,0.82,0.57))
 	label_at("FLORESTA SUSSURRANTE",Vector2(1250,465),14,Color(0.8,0.85,0.66))
 	label_at("ESTRADAS DE ELDEN",Vector2(2180,585),15,Color(0.88,0.82,0.62))
+func trail(points: Array, width: float):
+	# Overlapping feathered dirt sprites keep bends continuous and walkable.
+	for i in points.size()-1:
+		var a: Vector2 = points[i]
+		var b: Vector2 = points[i+1]
+		var dimensions = Vector2(a.distance_to(b)+width,width)
+		var patch = ground("dirt",Rect2((a+b)*0.5-dimensions*0.5,dimensions),true,Color(0.79,0.76,0.64))
+		patch.rotation = (b-a).angle()
 func ground(asset: String, rect: Rect2, feather: bool, tint: Color) -> Sprite2D:
 	var sprite = Sprite2D.new()
 	sprite.texture = load(ROOT+asset+".png")
@@ -107,6 +118,7 @@ func prop(asset: String, feet: Vector2, width: float, collision: Vector2, sorted
 	(yworld if sorted else terrain).add_child(root)
 	var sprite = Sprite2D.new()
 	sprite.texture = load(ROOT+asset+".png")
+	if asset=="tree": sprite.material = tree_material
 	var factor = width/sprite.texture.get_width()
 	sprite.scale = Vector2.ONE*factor
 	sprite.position.y = -sprite.texture.get_height()*factor*0.5

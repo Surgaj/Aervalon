@@ -43,6 +43,8 @@ jobs:
           if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/tests.log; then exit 1; fi
           godot --headless --path . --script tests/ranged_test.gd -- --test 2>&1 | tee /tmp/ranged-tests.log
           if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/ranged-tests.log; then exit 1; fi
+          godot --headless --path . --script tests/polish_test.gd -- --test 2>&1 | tee /tmp/polish-tests.log
+          if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/polish-tests.log; then exit 1; fi
           mkdir -p build/web
           godot --headless --path . --export-release Web build/web/index.html 2>&1 | tee /tmp/export.log
           if grep -E 'SCRIPT ERROR|Parse Error|ERROR:' /tmp/export.log; then exit 1; fi

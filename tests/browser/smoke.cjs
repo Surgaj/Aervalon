@@ -233,7 +233,7 @@ const assert = require('node:assert/strict');
     await page.waitForFunction(()=>JSON.parse(document.querySelector('canvas').dataset.aervalon).menu===false);
     assert.equal((await readState()).character_name,'Arin','Other character remains playable after deletion');
     assert.equal((await readState()).coins,4,'Deletion preserves surviving character progress');
-    const legacy={version:1,level:3,xp:7,coins:87,inventory:{rusty_sword:1,iron_sword:1,leather_armor:1,potion:2},equipment:{weapon:'iron_sword',armor:''},quest:'complete',kills:3,chest_open:true};
+    const legacy={version:1,level:3,xp:7,coins:87,inventory:{rusty_sword:1,iron_sword:1,leather_armor:1,potion:2,river_herb:1},equipment:{weapon:'iron_sword',armor:''},quest:'complete',kills:3,chest_open:true};
     const legacyContext=await browser.newContext({viewport:{width:844,height:390},hasTouch:true});
     await legacyContext.addInitScript(data=>localStorage.setItem('aervalon.eryndor.v1',JSON.stringify(data)),legacy);
     page=await legacyContext.newPage();
@@ -269,6 +269,55 @@ const assert = require('node:assert/strict');
     await page.waitForTimeout(400);
     assert.ok((await readState()).position[0]>2200,'Player reaches Elden outskirts through the bridge and road');
     await page.screenshot({path:'qa/elden-outskirts-mobile.png'});
+    assert.equal((await readState()).harvest_quest,'available','Walking into Elden does not silently accept Iria quest');
+    async function talkToIria() {
+      for(let attempt=0;attempt<5;attempt++) {
+        const position=(await readState()).iria_position;
+        await walkAxis(0,position[0],'d','a');
+        await walkAxis(1,position[1]+20,'s','w');
+        if((await readState()).nearby_npc==='Iria, agricultora') {
+          await page.keyboard.press('e');
+          await page.waitForTimeout(300);
+          return;
+        }
+      }
+      throw new Error('Could not reach Iria on her walking route');
+    }
+    await talkToIria();
+    assert.equal((await readState()).harvest_quest,'active','Dialogue accepts regional herb request');
+    await walkAxis(0,2310,'d','a');
+    await walkAxis(1,870,'s','w');
+    await walkAxis(0,2340,'d','a');
+    assert.equal((await readState()).interaction,'herb_farm','Farm trail leads to a reachable herb');
+    await page.keyboard.press('e');
+    await page.waitForTimeout(300);
+    await walkAxis(0,2305,'d','a');
+    await walkAxis(1,1100,'s','w');
+    await walkAxis(0,2470,'d','a');
+    await walkAxis(1,1175,'s','w');
+    await walkAxis(0,2560,'d','a');
+    assert.equal((await readState()).interaction,'herb_meadow','Southern trail reaches the second herb');
+    await page.keyboard.press('e');
+    await page.waitForTimeout(300);
+    await page.screenshot({path:'qa/elden-southern-grove-mobile.png'});
+    assert.equal((await readState()).inventory.river_herb,3,'Two real harvests add to one herb from legacy save');
+    await walkAxis(0,2470,'d','a');
+    await walkAxis(1,1100,'s','w');
+    await walkAxis(0,2305,'d','a');
+    await walkAxis(1,690,'s','w');
+    const beforeIria=await readState();
+    await talkToIria();
+    assert.equal((await readState()).harvest_quest,'complete','Returning to Iria completes the regional quest');
+    assert.equal((await readState()).coins,beforeIria.coins+12,'Iria pays the coin reward');
+    assert.equal((await readState()).inventory.potion,beforeIria.inventory.potion+2,'Iria supplies actual usable potions');
+    assert.equal((await readState()).inventory.river_herb,undefined,'Quest consumes the three supplied herbs');
+    await page.screenshot({path:'qa/iria-reward-mobile.png'});
+    await page.reload();
+    await page.waitForFunction(()=>!!document.querySelector('canvas')?.dataset.aervalon,null,{timeout:60000});
+    await pressUI('Entrar em Eryndor');
+    await page.waitForFunction(()=>JSON.parse(document.querySelector('canvas').dataset.aervalon).menu===false);
+    assert.equal((await readState()).harvest_quest,'complete','Completed regional quest survives browser reload');
+
     const originalSave=await page.evaluate(()=>JSON.parse(localStorage.getItem('aervalon.eryndor.v1')));
     assert.deepEqual(originalSave,legacy,'Original save remains untouched as backup');
     await page.keyboard.press('i');

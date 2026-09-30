@@ -28,3 +28,19 @@ Preservados mapa raster, sprites separados, Y-sort, colisões e saves.
 Limite visual: a animação corporal de ataque ainda utiliza as folhas atuais; armas nas
 mãos, pets, especializações e efeitos raros/míticos próprios exigem uma próxima etapa.
 Os ícones e pequenos projéteis SVG foram desenhados em código; não usam arte externa.
+
+## Polimento de Elden e pedido regional
+
+- Máscara compartilhada de recorte em todas as árvores, incluindo os arredores;
+  preserva a textura original, copa, raízes, escala e colisão do tronco.
+- Trilhas de terra raster unem estrada, casas e plantas; árvores agrupadas em
+  tamanhos variados, com corredores percorríveis. O mapa não aumentou.
+- XP dentro do painel de status; nomes de poderes em múltiplas linhas sem
+  expandir os botões; ícone de ataque acompanha a arma equipada.
+- Iria oferece “Remédio da Colheita”: 3 Ervas de Orvalho por 12 moedas,
+  2 poções e 25 XP, uma única vez. Dois pontos de coleta nos arredores.
+- Missão regional e regeneração das novas plantas persistem em campos opcionais
+  do save V1; missão principal e personagens existentes são preservados.
+
+Dungeon/boss, entradas jogáveis de The Below, regiões iniciais raciais,
+armas nas mãos com animações específicas e efeitos míticos continuam pendentes.
